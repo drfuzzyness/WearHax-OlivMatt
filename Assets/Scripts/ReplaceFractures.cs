@@ -17,9 +17,9 @@ public class ReplaceFractures : MonoBehaviour {
 	void OnCollisionEnter(Collision col){
 		fractureProxy.GetComponent<MoveFractures> ().colPos = col.contacts [0].point;
 
-		if (col.gameObject.name == "HitArm") {
+	
 			fractureProxy.GetComponent<MoveFractures>().MoveToReplace();
 			Destroy (gameObject);
-		}
+
 	}
 }
