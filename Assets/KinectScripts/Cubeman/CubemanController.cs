@@ -93,22 +93,7 @@ public class CubemanController : MonoBehaviour
             Hand_Tip_Right,
             Thumb_Right
 		};
-		
-		// array holding the skeleton lines
-		lines = new LineRenderer[bones.Length];
-		
-		if(skeletonLine)
-		{
-			for(int i = 0; i < lines.Length; i++)
-			{
-				if((i == 22 || i == 24) && debugLine)
-					lines[i] = Instantiate(debugLine) as LineRenderer;
-				else
-					lines[i] = Instantiate(skeletonLine) as LineRenderer;
 
-				lines[i].transform.parent = transform;
-			}
-		}
 
 		initialPosition = transform.position;
 		initialRotation = transform.rotation;
@@ -122,51 +107,8 @@ public class CubemanController : MonoBehaviour
 		
 		// get 1st player
 		Int64 userID = manager ? manager.GetUserIdByIndex(playerIndex) : 0;
-		
-		if(userID <= 0)
-		{
-			// reset the pointman position and rotation
-			if(transform.position != initialPosition)
-			{
-				transform.position = initialPosition;
-			}
-			
-			if(transform.rotation != initialRotation)
-			{
-				transform.rotation = initialRotation;
-			}
 
-			for(int i = 0; i < bones.Length; i++) 
-			{
-				bones[i].gameObject.SetActive(true);
-
-				bones[i].transform.localPosition = Vector3.zero;
-				bones[i].transform.localRotation = Quaternion.identity;
-				
-				if(skeletonLine)
-				{
-					lines[i].gameObject.SetActive(false);
-				}
-			}
-
-			return;
-		}
-		
-		// set the position in space
-		Vector3 posPointMan = manager.GetUserPosition(userID);
-		posPointMan.z = !mirroredMovement ? -posPointMan.z : posPointMan.z;
-		
-		// store the initial position
-		if(initialPosUserID != userID)
-		{
-			initialPosUserID = userID;
-			initialPosOffset = transform.position - (verticalMovement ? posPointMan * moveRate : new Vector3(posPointMan.x, 0, posPointMan.z) * moveRate);
-		}
-		
-		transform.position = initialPosOffset + 
-			(verticalMovement ? posPointMan * moveRate : new Vector3(posPointMan.x, 0, posPointMan.z) * moveRate);
-		
-		// update the local positions of the bones
+	
 		for(int i = 0; i < bones.Length; i++) 
 		{
 			if(bones[i] != null)
@@ -185,15 +127,13 @@ public class CubemanController : MonoBehaviour
 					Quaternion rotJoint = manager.GetJointOrientation(userID, joint, !mirroredMovement);
 					rotJoint = initialRotation * rotJoint;
 
-					posJoint -= posPointMan;
-					
 					if(mirroredMovement)
 					{
 						posJoint.x = -posJoint.x;
 						posJoint.z = -posJoint.z;
 					}
 
-					bones[i].transform.localPosition = posJoint;
+					bones[i].transform.position = posJoint+transform.position;
 					bones[i].transform.rotation = rotJoint;
 					
 					if(skeletonLine)
@@ -201,25 +141,11 @@ public class CubemanController : MonoBehaviour
 						lines[i].gameObject.SetActive(true);
 						Vector3 posJoint2 = bones[i].transform.position;
 						
-						Vector3 dirFromParent = manager.GetJointDirection(userID, joint, false, false);
-						dirFromParent.z = !mirroredMovement ? -dirFromParent.z : dirFromParent.z;
-						Vector3 posParent = posJoint2 - dirFromParent;
-						
-						//lines[i].SetVertexCount(2);
-						lines[i].SetPosition(0, posParent);
-						lines[i].SetPosition(1, posJoint2);
+			
 					}
 
 				}
-				else
-				{
-					bones[i].gameObject.SetActive(false);
-					
-					if(skeletonLine)
-					{
-						lines[i].gameObject.SetActive(false);
-					}
-				}
+
 			}	
 		}
 	}
