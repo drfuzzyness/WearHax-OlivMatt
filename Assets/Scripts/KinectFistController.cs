@@ -3,25 +3,23 @@ using System.Collections;
 
 public class KinectFistController : MonoBehaviour {
 
-	public Transform leftFist;
 	public Transform leftRoot;
-	public Transform rightFist;
 	public Transform rightRoot;
 
-	public float smoothFactor = 5f;
+	public float positionScale;
+	public float smoothFactor;
 
-	public float angleFlipAmt;
-	public Vector3 angleFlipDirection;
+	private float angleFlipAmt = 180f;
+	private Vector3 angleFlipDirection = Vector3.up;
 
-	public bool flagDisconecction;
+	public bool flagDisconection;
 
 	private KinectManager kinectManager;
 	private long kinectUserID;
-	private Quaternion initialRotation;
+
 
 	// Use this for initialization
 	void Start () {
-		initialRotation = transform.rotation;
 	}
 	
 	// Update is called once per frame
@@ -34,23 +32,40 @@ public class KinectFistController : MonoBehaviour {
 
 		if( kinectManager.IsUserDetected() ) {
 			UpdateArms();
-			flagDisconecction = false;
+			flagDisconection = false;
 		} else {
-			flagDisconecction = true;
+			flagDisconection = true;
 		}
 	}
 
 	private void UpdateArms() {
 		kinectUserID = kinectManager.GetUserIdByIndex( 0 );
 
+		Vector3 rootPos = kinectManager.GetUserPosition( kinectUserID );
+
 		Quaternion leftQuat = kinectManager.GetJointOrientation( kinectUserID, (int)KinectInterop.JointType.ElbowLeft, true );
-		leftQuat = initialRotation * leftQuat;
-		leftRoot.rotation = leftQuat;
+		leftQuat = leftQuat;
+		leftQuat = Quaternion.Slerp(leftRoot.localRotation, leftQuat, smoothFactor * Time.deltaTime);
+		leftRoot.localRotation = leftQuat;
+
+		Vector3 leftPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowLeft );
+		leftPos.z *= -1f;
+		leftPos = ( ( leftPos ) * positionScale );
+		leftPos = Vector3.Lerp(leftRoot.localPosition, leftPos, smoothFactor * Time.deltaTime);
+		leftRoot.localPosition = leftPos;
 
 		Quaternion rightQuat = kinectManager.GetJointOrientation( kinectUserID, (int)KinectInterop.JointType.ElbowRight, true );
-		rightQuat = initialRotation * rightQuat * Quaternion.AngleAxis( angleFlipAmt, angleFlipDirection );
+		rightQuat = rightQuat * Quaternion.AngleAxis( angleFlipAmt, angleFlipDirection );
+		rightQuat = Quaternion.Slerp(rightRoot.localRotation, rightQuat, smoothFactor * Time.deltaTime);
+		rightRoot.localRotation = rightQuat;
 
-		rightRoot.rotation = rightQuat;
+		Vector3 rightPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowRight );
+		rightPos.z *= -1f;
+		rightPos = ( ( rightPos ) * positionScale );
+		rightPos = Vector3.Lerp(rightRoot.localPosition, rightPos, smoothFactor * Time.deltaTime);
+		rightRoot.localPosition = rightPos;
+
+
 	}
 
 }
