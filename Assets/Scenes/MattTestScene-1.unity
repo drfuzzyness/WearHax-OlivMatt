@@ -41,7 +41,7 @@ RenderSettings:
 LightmapSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 5
-  m_GIWorkflowMode: 0
+  m_GIWorkflowMode: 1
   m_LightmapsMode: 1
   m_GISettings:
     serializedVersion: 2
@@ -408,7 +408,7 @@ Transform:
   m_GameObject: {fileID: 921109167}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.00699937, y: .00745916367, z: .0757980272}
-  m_LocalScale: {x: .5, y: .5, z: -.5}
+  m_LocalScale: {x: .5, y: .5, z: .5}
   m_Children: []
   m_Father: {fileID: 1609698435}
   m_RootOrder: 0
@@ -435,7 +435,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1130415203}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: .280999988, z: 4.44000006}
+  m_LocalPosition: {x: -.25, y: .280999988, z: .629999995}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2147326079}
@@ -457,6 +457,7 @@ MonoBehaviour:
   rightRoot: {fileID: 1609698435}
   positionScale: 4
   smoothFactor: 5
+  rootPosScale: .5
   flagDisconection: 0
 --- !u!1 &1333914689
 GameObject:

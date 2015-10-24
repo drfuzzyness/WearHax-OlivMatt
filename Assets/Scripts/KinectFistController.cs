@@ -8,6 +8,7 @@ public class KinectFistController : MonoBehaviour {
 
 	public float positionScale;
 	public float smoothFactor;
+	public float rootPosScale;
 
 	private float angleFlipAmt = 180f;
 	private Vector3 angleFlipDirection = Vector3.up;
@@ -44,12 +45,12 @@ public class KinectFistController : MonoBehaviour {
 		Vector3 rootPos = kinectManager.GetUserPosition( kinectUserID );
 
 		Quaternion leftQuat = kinectManager.GetJointOrientation( kinectUserID, (int)KinectInterop.JointType.ElbowLeft, true );
-		leftQuat = leftQuat;
+		//leftQuat = leftQuat;
 		leftQuat = Quaternion.Slerp(leftRoot.localRotation, leftQuat, smoothFactor * Time.deltaTime);
 		leftRoot.localRotation = leftQuat;
 
 		Vector3 leftPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowLeft );
-		leftPos.z *= -1f;
+		leftPos.z = leftPos.z * -1f - rootPos.z;
 		leftPos = ( ( leftPos ) * positionScale );
 		leftPos = Vector3.Lerp(leftRoot.localPosition, leftPos, smoothFactor * Time.deltaTime);
 		leftRoot.localPosition = leftPos;
@@ -60,8 +61,8 @@ public class KinectFistController : MonoBehaviour {
 		rightRoot.localRotation = rightQuat;
 
 		Vector3 rightPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowRight );
-		rightPos.z *= -1f;
-		rightPos = ( ( rightPos ) * positionScale );
+		rightPos.z = rightPos.z * -1f - rootPos.z;
+		rightPos = ( ( rightPos  ) * positionScale );
 		rightPos = Vector3.Lerp(rightRoot.localPosition, rightPos, smoothFactor * Time.deltaTime);
 		rightRoot.localPosition = rightPos;
 
