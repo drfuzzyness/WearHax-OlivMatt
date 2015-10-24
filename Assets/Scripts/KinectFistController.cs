@@ -48,23 +48,29 @@ public class KinectFistController : MonoBehaviour {
 		//leftQuat = leftQuat;
 		leftQuat = Quaternion.Slerp(leftRoot.localRotation, leftQuat, smoothFactor * Time.deltaTime);
 		leftRoot.localRotation = leftQuat;
-
-		Vector3 leftPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowLeft );
-		leftPos.z = leftPos.z * -1f - rootPos.z;
-		leftPos = ( ( leftPos ) * positionScale );
-		leftPos = Vector3.Lerp(leftRoot.localPosition, leftPos, smoothFactor * Time.deltaTime);
-		leftRoot.localPosition = leftPos;
-
+	
 		Quaternion rightQuat = kinectManager.GetJointOrientation( kinectUserID, (int)KinectInterop.JointType.ElbowRight, true );
 		rightQuat = rightQuat * Quaternion.AngleAxis( angleFlipAmt, angleFlipDirection );
 		rightQuat = Quaternion.Slerp(rightRoot.localRotation, rightQuat, smoothFactor * Time.deltaTime);
 		rightRoot.localRotation = rightQuat;
+		
+		/******************************************************/
 
 		Vector3 rightPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowRight );
-		rightPos.z = rightPos.z * -1f - rootPos.z;
+		rightPos.z = ( rightPos.z * -1f ) + rootPos.z;
+		rightPos.x = rightPos.x - rootPos.x;
+		rightPos.y = rightPos.y - rootPos.y;
 		rightPos = ( ( rightPos  ) * positionScale );
 		rightPos = Vector3.Lerp(rightRoot.localPosition, rightPos, smoothFactor * Time.deltaTime);
 		rightRoot.localPosition = rightPos;
+
+		Vector3 leftPos = kinectManager.GetJointPosition( kinectUserID, (int)KinectInterop.JointType.ElbowLeft );
+		leftPos.z = (leftPos.z * -1f) + rootPos.z;
+		leftPos.x = leftPos.x - rootPos.x;
+		leftPos.y = leftPos.y - rootPos.y;
+		leftPos = ( ( leftPos ) * positionScale );
+		leftPos = Vector3.Lerp(leftRoot.localPosition, leftPos, smoothFactor * Time.deltaTime);
+		leftRoot.localPosition = leftPos;
 
 
 	}
