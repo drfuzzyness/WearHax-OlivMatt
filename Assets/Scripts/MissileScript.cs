@@ -5,11 +5,12 @@ public class MissileScript : MonoBehaviour {
 
 	// Use this for initialization
 	public Vector3 startRotation;
-	public Transform player;
+	private Transform player;
 	public float lerpSpeed=.1f;
 	public float missileSpeed=1f;
 	void Start () {
-		startRotation = Random.rotation.eulerAngles;
+		//startRotation = Random.rotation.eulerAngles;
+		player = MissileCommandManager.instance.missileTarget;
 	}
 	
 	// Update is called once per frame

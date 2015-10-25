@@ -46,7 +46,7 @@ GameObject:
   - 64: {fileID: 6434852}
   m_Layer: 0
   m_Name: Cube.001_cell.004
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -66,7 +66,7 @@ GameObject:
   - 64: {fileID: 6491426}
   m_Layer: 0
   m_Name: Cube.001_cell.012
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -86,7 +86,7 @@ GameObject:
   - 64: {fileID: 6497536}
   m_Layer: 0
   m_Name: Cube.001_cell.003
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -106,7 +106,7 @@ GameObject:
   - 64: {fileID: 6439876}
   m_Layer: 0
   m_Name: Cube.001_cell.005
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -126,7 +126,7 @@ GameObject:
   - 64: {fileID: 6478140}
   m_Layer: 0
   m_Name: Cube.001_cell.010
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -146,7 +146,7 @@ GameObject:
   - 64: {fileID: 6488594}
   m_Layer: 0
   m_Name: Cube.001_cell.018
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -166,7 +166,7 @@ GameObject:
   - 64: {fileID: 6499210}
   m_Layer: 0
   m_Name: Cube.001_cell.008
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -186,7 +186,7 @@ GameObject:
   - 64: {fileID: 6465026}
   m_Layer: 0
   m_Name: Cube.001_cell.009
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -208,7 +208,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!1 &137728
 GameObject:
@@ -225,7 +225,7 @@ GameObject:
   - 64: {fileID: 6439218}
   m_Layer: 0
   m_Name: Cube.001_cell.007
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -245,7 +245,7 @@ GameObject:
   - 64: {fileID: 6425258}
   m_Layer: 0
   m_Name: Cube.001_cell.015
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -265,7 +265,7 @@ GameObject:
   - 64: {fileID: 6473756}
   m_Layer: 0
   m_Name: Cube.001_cell.019
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -285,7 +285,7 @@ GameObject:
   - 64: {fileID: 6485878}
   m_Layer: 0
   m_Name: Cube.001_cell.013
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -305,7 +305,7 @@ GameObject:
   - 64: {fileID: 6485592}
   m_Layer: 0
   m_Name: Cube.001_cell.016
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -325,7 +325,7 @@ GameObject:
   - 64: {fileID: 6467072}
   m_Layer: 0
   m_Name: Cube.001_cell.017
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -345,7 +345,7 @@ GameObject:
   - 64: {fileID: 6483148}
   m_Layer: 0
   m_Name: Cube.001_cell.001
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -365,7 +365,7 @@ GameObject:
   - 64: {fileID: 6482746}
   m_Layer: 0
   m_Name: Cube.001_cell.006
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -385,7 +385,7 @@ GameObject:
   - 64: {fileID: 6469424}
   m_Layer: 0
   m_Name: Cube.001_cell.002
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -420,7 +420,7 @@ GameObject:
   - 64: {fileID: 6445788}
   m_Layer: 0
   m_Name: Cube.001_cell.014
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -440,7 +440,7 @@ GameObject:
   - 64: {fileID: 6458546}
   m_Layer: 0
   m_Name: Cube.001_cell.011
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -460,7 +460,7 @@ GameObject:
   - 64: {fileID: 6458086}
   m_Layer: 0
   m_Name: Cube.001_cell
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -484,8 +484,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 109482}
   m_LocalRotation: {x: -.707106829, y: 0, z: 0, w: .707106709}
-  m_LocalPosition: {x: 0, y: 1.58000004, z: 0}
-  m_LocalScale: {x: 111.83078, y: 76.3149033, z: 156.37291}
+  m_LocalPosition: {x: 0, y: .629999995, z: 0}
+  m_LocalScale: {x: 111.83078, y: 76.3149033, z: 64.1234818}
   m_Children:
   - {fileID: 480330}
   - {fileID: 433990}
@@ -678,8 +678,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 182028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 28.2000008, y: 0, z: 4.5}
+  m_LocalScale: {x: 1, y: 2.54269934, z: 1}
   m_Children:
   - {fileID: 413724}
   m_Father: {fileID: 0}
@@ -2310,6 +2310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fractureProxy: {fileID: 108248}
+  givePowerup: 0
 --- !u!114 &11498144
 MonoBehaviour:
   m_ObjectHideFlags: 1
