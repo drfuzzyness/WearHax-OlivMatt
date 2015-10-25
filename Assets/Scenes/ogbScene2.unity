@@ -3474,7 +3474,6 @@ MonoBehaviour:
   m_Script: {fileID: 1878737880}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_AllowActivationOnStandalone: 0
 --- !u!114 &247689712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3504,9 +3503,6 @@ MonoBehaviour:
   m_Script: {fileID: 1166159924}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_FirstSelected: {fileID: 0}
-  m_sendNavigationEvents: 1
-  m_DragThreshold: 5
 --- !u!4 &247689714
 Transform:
   m_ObjectHideFlags: 0
