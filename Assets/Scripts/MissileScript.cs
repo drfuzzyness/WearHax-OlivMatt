@@ -5,7 +5,7 @@ public class MissileScript : MonoBehaviour {
 
 	// Use this for initialization
 	public Vector3 startRotation;
-	private Transform player;
+	public Transform player;
 	public float lerpSpeed=.1f;
 	public float missileSpeed=1f;
 	void Start () {

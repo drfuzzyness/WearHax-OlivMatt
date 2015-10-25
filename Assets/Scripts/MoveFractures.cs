@@ -22,14 +22,17 @@ public class MoveFractures : MonoBehaviour {
 	
 	}
 	public void MissileReplace(Vector3 pos,Quaternion rot){	
+		transform.parent = null;
 
-		foreach (FragmentScript child in fragScripts) {
-			child.GetComponent<Rigidbody>().AddForce(Random.insideUnitSphere*360);
-			//child.colPos=colPos;
-			
-		}
 		transform.position = pos;
 		transform.rotation = rot;
+		foreach (FragmentScript child in fragScripts) {
+			
+			child.GetComponent<Rigidbody>().AddForce(Random.insideUnitSphere*360);
+			//child.colPos=colPos;
+			child.transform.parent=null;
+		}
+
 		destroying = true;
 	}
 	public void MoveToReplace(){	

@@ -47,16 +47,17 @@ public class MissileCommandManager : MonoBehaviour {
 	}
 
 	IEnumerator LaunchLoop() {
-		yield return new WaitForSeconds( timeBetweenLaunches );
-		bool shot = false;
-		while( !shot ) {
-			if( midairMissiles.Count < maxMissilesMidair ) {
-				LaunchMissile();
-				shot = true;
+		while (true) {
+			yield return new WaitForSeconds (timeBetweenLaunches);
+			bool shot = false;
+			while (!shot) {
+				if (midairMissiles.Count < maxMissilesMidair) {
+					LaunchMissile ();
+					shot = true;
+				}
+				yield return 0;
 			}
-			yield return 0;
+		
 		}
-		
-		
 	}
 }
