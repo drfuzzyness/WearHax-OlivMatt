@@ -1,0 +1,88 @@
+(0, 24-Oct-2015 19:28:44) Initializing PieLog
+(0, 24-Oct-2015 19:28:44) Initializing filemode variable
+(0, 24-Oct-2015 19:28:44) Initializing PieSpeech
+(0, 24-Oct-2015 19:28:44) Initializing PieVariables
+(0, 24-Oct-2015 19:28:44) Initializing PieCursorUnit
+(0, 24-Oct-2015 19:28:44) Initializing PieMouse
+(0, 24-Oct-2015 19:28:44) Initializing PieKeyboard
+(0, 24-Oct-2015 19:28:44) Initializing PieInput
+(0, 24-Oct-2015 19:28:44) Initializing PieOSC
+(0, 24-Oct-2015 19:28:44) Initializing PiePie
+(0, 24-Oct-2015 19:28:44) Initializing PieFunction
+(0, 24-Oct-2015 19:28:44) Initializing PieStatement
+(0, 24-Oct-2015 19:28:44) Initializing PieExpression
+(0, 24-Oct-2015 19:28:44) Initializing PieJoystick
+(0, 24-Oct-2015 19:28:44) Initializing PieP5
+(0, 24-Oct-2015 19:28:44) Initializing PieMidi
+(0, 24-Oct-2015 19:28:44) Initializing PiePPJoy
+(0, 24-Oct-2015 19:28:44) Initializing PieRemote
+(0, 24-Oct-2015 19:28:44) Initializing Pie Speech Recognition
+(0, 24-Oct-2015 19:28:44) Initializing PieScreen
+(0, 24-Oct-2015 19:28:44) GetMonitorEDID
+(0, 24-Oct-2015 19:28:44) Initializing PieWIndow
+(0, 24-Oct-2015 19:28:44) Initializing PieCursors
+(0, 24-Oct-2015 19:28:44) Initializing PieZ800
+(0, 24-Oct-2015 19:28:44) Initializing PieIntersense
+(0, 24-Oct-2015 19:28:44) Initializing PieFastrak
+(0, 24-Oct-2015 19:28:44) Initializing PiePPT
+(0, 24-Oct-2015 19:28:44) Initializing PieTrackIR
+(0, 24-Oct-2015 19:28:44) Initializing PiePinch
+(0, 24-Oct-2015 19:28:44) Initializing PieBird
+(0, 24-Oct-2015 19:28:44) Initializing PieFiveDT
+(0, 24-Oct-2015 19:28:44) Starting main
+(0, 24-Oct-2015 19:28:44) Application object initialized
+(0, 24-Oct-2015 19:28:44) Creating main window
+(0, 24-Oct-2015 19:28:44) EditorForm.Create
+(0, 24-Oct-2015 19:28:44) Checking command line parameters:
+(0, 24-Oct-2015 19:28:44) Creating debug window
+(0, 24-Oct-2015 19:28:44) Assigning exception handler
+(0, 24-Oct-2015 19:28:44) Creating debug remote control window
+(0, 24-Oct-2015 19:28:44) Running application
+(0, 24-Oct-2015 19:29:13) File>Save
+(0, 24-Oct-2015 19:29:13) File>Save As
+(0, 24-Oct-2015 19:29:51) RunButton
+(0, 24-Oct-2015 19:29:51) Compile>Run
+(0, 24-Oct-2015 19:29:51) CompileCode
+(0, 24-Oct-2015 19:29:51) StartingInputMonitor CompileJoystick
+(0, 24-Oct-2015 19:29:51) EnumerateJoysticks
+(0, 24-Oct-2015 19:29:51) Enumerated... BadGamePad = False
+(0, 24-Oct-2015 19:29:51) StartCompileTimeP5 False
+(0, 24-Oct-2015 19:29:51) StoppingInputMonitor CompileJoystick
+(0, 24-Oct-2015 19:29:51) StartRuntime
+(0, 24-Oct-2015 19:29:51) StartRuntimeJoystick
+(0, 24-Oct-2015 19:29:51) ************************* False
+(0, 24-Oct-2015 19:53:57) StopButton
+(0, 24-Oct-2015 19:53:57) Compile>Stop
+(0, 24-Oct-2015 19:53:57) StopRuntime
+(0, 24-Oct-2015 19:53:58) StopRuntimeJoystick
+(0, 24-Oct-2015 19:54:01) FormCloseQuery
+(0, 24-Oct-2015 19:54:01) Compile>Stop
+(0, 24-Oct-2015 19:54:01) Application finished
+(0, 24-Oct-2015 19:54:01) Destroying EditorForm
+(0, 24-Oct-2015 19:54:01) Finalizing PieFiveDT
+(0, 24-Oct-2015 19:54:01) Finalizing PieBird
+(0, 24-Oct-2015 19:54:01) Finalizing PiePinch
+(0, 24-Oct-2015 19:54:01) Finalizing PieTrackIR
+(0, 24-Oct-2015 19:54:01) Finalizing PiePPT
+(0, 24-Oct-2015 19:54:01) Finalizing PieFastrak
+(0, 24-Oct-2015 19:54:01) Finalizing PieIntersense
+(0, 24-Oct-2015 19:54:01) Finalizing PieZ800
+(0, 24-Oct-2015 19:54:01) Finalizing PieCursors
+(0, 24-Oct-2015 19:54:01) Finalizing PieWindow
+(0, 24-Oct-2015 19:54:01) Finalizing PieScreen
+(0, 24-Oct-2015 19:54:01) Finalizing Pie Speech Recognition
+(0, 24-Oct-2015 19:54:01) Finalizing PieRemote
+(0, 24-Oct-2015 19:54:01) Finalizing PiePPJoy
+(0, 24-Oct-2015 19:54:01) Finalizing PieMidi
+(0, 24-Oct-2015 19:54:01) Finalizing PieP5
+(0, 24-Oct-2015 19:54:01) Finalizing PieJoystick
+(0, 24-Oct-2015 19:54:01) Finalizing PieStatement
+(0, 24-Oct-2015 19:54:01) Finalizing PieFunction
+(0, 24-Oct-2015 19:54:01) Finalizing PiePie
+(0, 24-Oct-2015 19:54:01) Finalizing PieOSC
+(0, 24-Oct-2015 19:54:01) Finalizing PieKeyboard
+(0, 24-Oct-2015 19:54:01) Finalizing PieMouse
+(0, 24-Oct-2015 19:54:01) Finalizing PieVariables
+(0, 24-Oct-2015 19:54:01) Finalizing PieSpeech
+(0, 24-Oct-2015 19:54:01) Finalizing PieLog
+(0, 24-Oct-2015 19:54:01) Closing log file
