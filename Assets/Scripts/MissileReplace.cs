@@ -15,7 +15,7 @@ public class MissileReplace : MonoBehaviour {
 	}
 	
 	void OnCollisionEnter(Collision col){
-		MissileCommandManager.instance.OnMissileHit( col );
+		MissileCommandManager.instance.OnMissileHit( col, gameObject );
 		fractureProxy.GetComponent<MoveFractures>().MissileReplace(transform.position,transform.rotation);
 		Destroy (transform.parent.parent.gameObject);
 		
