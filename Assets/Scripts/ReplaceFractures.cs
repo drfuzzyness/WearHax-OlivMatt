@@ -15,11 +15,10 @@ public class ReplaceFractures : MonoBehaviour {
 	}
 
 	void OnCollisionEnter(Collision col){
-		fractureProxy.GetComponent<MoveFractures> ().colPos = col.contacts [0].point;
+		//fractureProxy.GetComponent<MoveFractures>().colPos = col.contacts[0].point;
 
-	
-			fractureProxy.GetComponent<MoveFractures>().MoveToReplace();
-			Destroy (gameObject);
+		fractureProxy.GetComponent<MoveFractures>().MoveToReplace();
+		Destroy (gameObject);
 
 	}
 }
