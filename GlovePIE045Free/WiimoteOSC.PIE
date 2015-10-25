@@ -1,14 +1,11 @@
 ﻿var.port = 54934
 
-debug = "On: " + Wiimote1.Exists + " Wiimote battery level: " + Wiimote1.Battery + " Rotation: " + Wiimote1.YawSpeed
+debug = "On: " + Wiimote1.Exists + " D-PAD Status X: " +  Wiimote1.DPad
 
-SendOsc("localhost", var.port, "/wii/1/start", true)
-SendOsc("localhost", var.port, "/wii/1/acceleration", tostring(Wiimote1.gx), tostring(Wiimote1.gy), tostring(Wiimote1.gz))
-SendOsc("localhost", var.port, "/wii/1/rotationSpeed", tostring(Wiimote1.PitchSpeed in radians), tostring(-Wiimote1.YawSpeed in radians), tostring(Wiimote1.RollSpeed in radians))
-SendOsc("localhost", var.port, "/wii/1/analog", tostring(Wiimote1.Nunchuk.JoyX), tostring(Wiimote1.Nunchuk.JoyY))
-SendOsc("localhost", var.port, "/wii/1/buttonA", int(Wiimote1.A))
-SendOsc("localhost", var.port, "/wii/1/buttonB", int(Wiimote1.B))
-SendOsc("localhost", var.port, "/wii/1/buttonC", int(Wiimote1.Nunchuk.C))
-SendOsc("localhost", var.port, "/wii/1/buttonZ", int(Wiimote1.Nunchuk.Z))
-SendOsc("localhost", var.port, "/wii/1/button1", int(Wiimote1.One))
-SendOsc("localhost", var.port, "/wii/1/done", true)
+//SendOsc("localhost", var.port, "/wii/1/start", true)
+// SendOsc("localhost", var.port, "/wii/1/acceleration", tostring(Wiimote1.gx), tostring(Wiimote1.gy), tostring(Wiimote1.gz))
+//SendOsc("localhost", var.port, "/wii/1/rotationSpeed", tostring(Wiimote1.PitchSpeed in radians), tostring(-Wiimote1.YawSpeed in radians), tostring(Wiimote1.RollSpeed in radians))
+// SendOsc("localhost", var.port, "/wii/1/buttonC", int(Wiimote1.Nunchuk.C))
+// SendOsc("localhost", var.port, "/wii/1/buttonZ", int(Wiimote1.Nunchuk.Z))
+SendOsc("localhost", var.port, "/wii/1/dpad", tostring(Wiimote1.DPad))
+//SendOsc("localhost", var.port, "/wii/1/done", true)
