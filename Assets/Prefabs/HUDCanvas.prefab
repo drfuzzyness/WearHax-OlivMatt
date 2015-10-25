@@ -182,6 +182,7 @@ MonoBehaviour:
   scoreNumTO: {fileID: 11432574}
   timerNumTO: {fileID: 11415728}
   missileTO: {fileID: 11478140}
+  missileOpacitySensitivity: 25
 --- !u!114 &11427342
 MonoBehaviour:
   m_ObjectHideFlags: 1
