@@ -5,6 +5,7 @@ public class ReplaceFractures : MonoBehaviour {
 
 	// Use this for initialization
 	public GameObject fractureProxy;
+	public bool givePowerup;
 	void Start () {
 	
 	}
@@ -15,11 +16,16 @@ public class ReplaceFractures : MonoBehaviour {
 	}
 
 	void OnCollisionEnter(Collision col){
-//		fractureProxy.GetComponent<MoveFractures> ().colPos = col.contacts [0].point;
+		if( col.gameObject.CompareTag( "BuildingGiblet" ) ) {
+			return;
+		}
+
 		GameManager.instance.OnDestroyBuilding();
+		if( givePowerup ) {
+			GameManager.instance.OnGetPowerup();
+		}
 	
 		fractureProxy.GetComponent<MoveFractures>().MoveToReplace();
 		Destroy (gameObject);
-
 	}
 }

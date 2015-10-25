@@ -15,7 +15,7 @@ GameObject:
   - 64: {fileID: 6435746}
   m_Layer: 0
   m_Name: Cube_cell.005
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35,7 +35,7 @@ GameObject:
   - 64: {fileID: 6460760}
   m_Layer: 0
   m_Name: Cube_cell.006
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -55,7 +55,7 @@ GameObject:
   - 64: {fileID: 6488238}
   m_Layer: 0
   m_Name: Cube_cell
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -75,7 +75,7 @@ GameObject:
   - 64: {fileID: 6431384}
   m_Layer: 0
   m_Name: Cube_cell.003
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -95,7 +95,7 @@ GameObject:
   - 64: {fileID: 6494352}
   m_Layer: 0
   m_Name: Cube_cell.004
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -133,7 +133,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!1 &168978
 GameObject:
@@ -165,7 +165,7 @@ GameObject:
   - 64: {fileID: 6437146}
   m_Layer: 0
   m_Name: Cube_cell.002
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -200,7 +200,7 @@ GameObject:
   - 64: {fileID: 6486410}
   m_Layer: 0
   m_Name: Cube_cell.001
-  m_TagString: Untagged
+  m_TagString: BuildingGiblet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -224,7 +224,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 189182}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.98000002, y: 0, z: 5.09000015}
+  m_LocalPosition: {x: -8.30000019, y: -.000875592232, z: -9.51000023}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 435108}
@@ -824,6 +824,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fractureProxy: {fileID: 155704}
+  givePowerup: 0
 --- !u!114 &11434526
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -6,13 +6,24 @@ public class GameManager : MonoBehaviour {
 	public bool countingDown;
 	public float timer = 60f;
 	public int score;
+	public GameObject player;
 
 	[Header("Balance")]
 	public float timePowerupRewardAmt = 5f;
+	public float missileHitPenalty = 4f;
 	public static GameManager instance;
 
 	public void OnDestroyBuilding() {
 		score += 1;
+	}
+
+	public void OnGetPowerup() {
+		timer += timePowerupRewardAmt;
+	}
+
+	public void OnMissileHit() {
+		// pause player movement
+		// ui for that
 	}
 
 	void Awake() {
