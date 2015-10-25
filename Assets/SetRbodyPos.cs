@@ -11,7 +11,7 @@ public class SetRbodyPos : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 		rbody.MovePosition (targetPos.position);
 	
 	}

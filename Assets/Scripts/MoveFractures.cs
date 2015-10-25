@@ -13,7 +13,7 @@ public class MoveFractures : MonoBehaviour {
 
 		fragScripts = GetComponentsInChildren<FragmentScript> ();
 		startPos = transform.position;
-		transform.position = new Vector3 (0f, -500f, 0f);
+		transform.Translate (Vector3.down * 500f);
 	}
 	
 	// Update is called once per frame

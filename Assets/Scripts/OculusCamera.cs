@@ -21,7 +21,7 @@ public class OculusCamera : MonoBehaviour {
 			transform.parent.Rotate (Vector3.up * -anchorYRotation * rotScale);
 		}
 //		pos = UnityEngine.VR.InputTracking.GetLocalPosition (UnityEngine.VR.VRNode);
-		transform.position = Vector3.zero + anchorObj.transform.localPosition.y * Vector3.up * scalePositionalInput;
+		//transform.position = Vector3.zero + anchorObj.transform.localPosition.y * Vector3.up * scalePositionalInput;
 //		transform.position = Vector3.zero + anchorObj.transform.localPosition * scalePositionalInput;
 //		Vector3 tRot = transform.parent.rotation;
 		//transform.parent.rotation = Quaternion.Euler ( startRotation + anchorObj.transform.localRotation.eulerAngles);
