@@ -30,7 +30,7 @@ public class MoveFractures : MonoBehaviour {
 			
 			child.GetComponent<Rigidbody>().AddForce(Random.insideUnitSphere*360);
 			//child.colPos=colPos;
-			child.transform.parent=null;
+		//	child.transform.parent=null;
 		}
 
 		destroying = true;

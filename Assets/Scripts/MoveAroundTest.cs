@@ -5,7 +5,6 @@ public class MoveAroundTest : MonoBehaviour {
 
 	// Use this for initialization
 	public float speed=1f;
-	public AudioSource stompSFX;
 	public float walkingDuration;
 	public float pauseDuration;
 	public bool moving;
@@ -13,7 +12,7 @@ public class MoveAroundTest : MonoBehaviour {
 	public float timer;
 	void Start () {
 		timer = 0;
-		moving = false;
+		moving = true;
 	}
 	
 	// Update is called once per frame
@@ -29,23 +28,11 @@ public class MoveAroundTest : MonoBehaviour {
 //			} else  {
 				transform.Translate(Vector3.forward*speed * Input.GetAxis ("Vertical") * Time.deltaTime
 				                    + Vector3.right*speed * Input.GetAxis ("Horizontal") * Time.deltaTime);
-
 //			}
 //			timer -= Time.deltaTime;
 //		}
 
-		if( Input.GetAxis ("Vertical") != 0 || Input.GetAxis ("Horizontal") != 0 ) {
-			if( !moving ) {
-				stompSFX.Play();
-			}
-		} else {
-			moving = false;
-			if( moving ) {
-				stompSFX.Stop();
-				stompSFX.time = 0f;
-			}
-		}
-		
+
 
 
 	}

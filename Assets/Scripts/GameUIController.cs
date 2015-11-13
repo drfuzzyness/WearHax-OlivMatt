@@ -21,7 +21,7 @@ public class GameUIController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		scoreNumTO.text = gm.score.ToString();
-		timerNumTO.text = gm.timer.ToString();
+		timerNumTO.text = Mathf.Floor( gm.timer ).ToString();
 		Color newMissileColor = missileTO.color;
 		if( mc.midairMissiles.Count > 0 ) {
 			Vector3 distance = gm.player.transform.position - mc.midairMissiles[0].transform.position;
