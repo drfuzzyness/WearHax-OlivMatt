@@ -65,7 +65,6 @@ LightmapSettings:
     m_TextureCompression: 1
     m_FinalGather: 0
     m_FinalGatherRayCount: 1024
-    m_ReflectionCompression: 2
   m_LightmapSnapshot: {fileID: 0}
   m_RuntimeCPUUsage: 75
 --- !u!196 &4
@@ -85,6 +84,9 @@ NavMeshSettings:
     cellSize: .166666672
     manualCellSize: 0
   m_NavMeshData: {fileID: 0}
+--- !u!127 &5
+LevelGameManager:
+  m_ObjectHideFlags: 0
 --- !u!1001 &19809393
 Prefab:
   m_ObjectHideFlags: 0
@@ -1587,6 +1589,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &202405537
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2220,6 +2227,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &298830557
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2331,6 +2343,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &318606850
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2558,6 +2575,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &321874933
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3412,6 +3434,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &383449987
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4855,6 +4882,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &570481065
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5566,6 +5598,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &628477677
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6003,6 +6040,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &672326526
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7516,6 +7558,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &824314742
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7789,6 +7836,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &842791290
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8004,6 +8056,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &866534737
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11529,6 +11586,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1326953671
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12149,27 +12211,6 @@ MonoBehaviour:
   m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: .875, g: .0905172303, b: 0, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: d06eb32e3866c0a4cbaefeb9b78823ec, type: 3}
-    m_FontSize: 50
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 1
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: PUNCH THE MISSILE
 --- !u!222 &1393790727
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12996,6 +13037,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1473847083
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -13506,7 +13552,6 @@ MonoBehaviour:
   m_Script: {fileID: 1997211142, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ForceModuleActive: 0
 --- !u!114 &1575750200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13518,13 +13563,6 @@ MonoBehaviour:
   m_Script: {fileID: 1077351063, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_HorizontalAxis: Horizontal
-  m_VerticalAxis: Vertical
-  m_SubmitButton: Submit
-  m_CancelButton: Cancel
-  m_InputActionsPerSecond: 10
-  m_RepeatDelay: .5
-  m_ForceModuleActive: 0
 --- !u!114 &1575750201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13536,9 +13574,6 @@ MonoBehaviour:
   m_Script: {fileID: -619905303, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_FirstSelected: {fileID: 0}
-  m_sendNavigationEvents: 1
-  m_DragThreshold: 5
 --- !u!4 &1575750202
 Transform:
   m_ObjectHideFlags: 0
@@ -16583,6 +16618,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1752916135
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17646,6 +17686,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1835486381
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17757,6 +17802,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1838073436
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -18247,6 +18297,11 @@ MonoBehaviour:
   rbody: {fileID: 0}
   colPos: {x: 0, y: 0, z: 0}
   forceAmt: 100
+  killTime: 0
+  player: {fileID: 0}
+  empty: {fileID: 0}
+  distKill: 50
+  active: 0
 --- !u!23 &1884409085
 MeshRenderer:
   m_ObjectHideFlags: 0
