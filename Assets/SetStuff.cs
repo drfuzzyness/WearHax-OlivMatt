@@ -14,8 +14,11 @@ public class SetStuff : MonoBehaviour {
 		GetComponent<Rigidbody> ().useGravity = false;
 		GetComponent<MeshCollider> ().enabled = true;
 		GetComponent<Rigidbody> ().isKinematic = false;
-		Debug.Log ("ye");
+		//Debug.Log ("ye");
 		GetComponent<Rigidbody>().AddForce(Random.insideUnitSphere*360);
+        GetComponent<FragmentScript>().enabled = true;
+        GetComponent<FragmentScript>().active = true;
+        GetComponent<SetGravityDelay>().enabled = true;
 	}
 
 	// Update is called once per frame
