@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 473622}
   - 114: {fileID: 11470348}
+  - 136: {fileID: 13624446}
   m_Layer: 0
   m_Name: PlayerMissile
   m_TagString: Untagged
@@ -168,7 +169,21 @@ MonoBehaviour:
   startRotation: {x: 0, y: 0, z: 0}
   meteor: {fileID: 0}
   lerpSpeed: 0.01
-  missileSpeed: 5
+  missileSpeed: 1
+  accellAmt: 0.5
+--- !u!136 &13624446
+CapsuleCollider:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 109046}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  m_Radius: 0.05
+  m_Height: 0.5
+  m_Direction: 2
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

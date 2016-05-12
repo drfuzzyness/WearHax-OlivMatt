@@ -8,10 +8,16 @@ public class MissileShooter : MonoBehaviour {
 
     public GameObject playerMissile;
     public Transform leftHand;
-	// Use this for initialization
-	void Start () {
-	
-	}
+    public GameObject targetSphere;
+    // Use this for initializationp
+    public Material mat;
+    public float targetVal=1f;
+    public  float val;
+
+    void Start () {
+      mat=  targetSphere.GetComponent<MeshRenderer>().material;
+
+    }
 	
 	// Update is called once per frame
 	void Update () {
@@ -38,6 +44,19 @@ public class MissileShooter : MonoBehaviour {
             }
 
         }
+
+        if (lookingAtMeteor)
+        {
+            targetVal = 0f;
+        }
+        else
+        {
+            targetVal = .6f;
+        }
+
+        val = Mathf.Lerp(val, targetVal, .01f);
+        mat.SetFloat("_fade", val);
+        targetSphere.transform.localScale = Vector3.one * (1.2f + val);
 	
 	}
 

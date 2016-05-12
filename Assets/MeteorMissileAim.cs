@@ -9,6 +9,7 @@ public class MeteorMissileAim : MonoBehaviour
     public Transform meteor;
     public float lerpSpeed = .1f;
     public float missileSpeed = 1f;
+    public float accellAmt = 1f;
     void Start()
     {
         //startRotation = Random.rotation.eulerAngles;
@@ -18,10 +19,21 @@ public class MeteorMissileAim : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        transform.localScale =  Vector3.one * missileSpeed ;
+        missileSpeed += accellAmt;
         Quaternion playerTarget = Quaternion.LookRotation(meteor.position - transform.position, Vector3.up);
         Quaternion newRot = Quaternion.Slerp(transform.rotation, playerTarget, lerpSpeed);
         transform.rotation = newRot;
         transform.Translate(Vector3.forward * missileSpeed * Time.deltaTime);
 
+    }
+
+    void OnTriggerEnter(Collider col)
+    {
+        if (col.CompareTag("MeteorInner"))
+        {
+
+            Debug.Log("yep");
+        }
     }
 }
