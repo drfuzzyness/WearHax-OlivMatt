@@ -45,7 +45,7 @@ public class K2SensorChecker : MonoBehaviour
 //					Debug.LogError(ex.ToString());
 //				}
 //			}
-			
+
 			// init the available sensor interfaces
 			sensorInterface = new Kinect2Interface();
 

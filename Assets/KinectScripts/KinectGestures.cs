@@ -7,7 +7,7 @@ using System.Collections.Generic;
 /// <summary>
 /// KinectGestures is utility class that processes programmatic Kinect gestures
 /// </summary>
-public class KinectGestures
+public class KinectGestures : MonoBehaviour
 {
 
 	/// <summary>
@@ -97,7 +97,19 @@ public class KinectGestures
 		LeanLeft,
 		LeanRight,
 		KickLeft,
-		KickRight
+		KickRight,
+		Run,
+
+		UserGesture1 = 101,
+		UserGesture2 = 102,
+		UserGesture3 = 103,
+		UserGesture4 = 104,
+		UserGesture5 = 105,
+		UserGesture6 = 106,
+		UserGesture7 = 107,
+		UserGesture8 = 108,
+		UserGesture9 = 109,
+		UserGesture10 = 110,
 	}
 	
 	
@@ -124,23 +136,27 @@ public class KinectGestures
 	}
 	
 
-	
 	// Gesture related constants, variables and functions
-	private static int leftHandIndex;
-	private static int rightHandIndex;
+	protected int leftHandIndex;
+	protected int rightHandIndex;
 		
-	private static int leftElbowIndex;
-	private static int rightElbowIndex;
+	protected int leftElbowIndex;
+	protected int rightElbowIndex;
 		
-	private static int leftShoulderIndex;
-	private static int rightShoulderIndex;
+	protected int leftShoulderIndex;
+	protected int rightShoulderIndex;
 	
-	private static int hipCenterIndex;
-	private static int shoulderCenterIndex;
-	private static int leftHipIndex;
-	private static int rightHipIndex;
-	private static int leftAnkleIndex;
-	private static int rightAnkleIndex;
+	protected int hipCenterIndex;
+	protected int shoulderCenterIndex;
+
+	protected int leftHipIndex;
+	protected int rightHipIndex;
+
+	protected int leftKneeIndex;
+	protected int rightKneeIndex;
+	
+	protected int leftAnkleIndex;
+	protected int rightAnkleIndex;
 
 
 	/// <summary>
@@ -148,7 +164,7 @@ public class KinectGestures
 	/// </summary>
 	/// <returns>The needed joint indexes.</returns>
 	/// <param name="manager">The KinectManager instance</param>
-	public static int[] GetNeededJointIndexes(KinectManager manager)
+	public virtual int[] GetNeededJointIndexes(KinectManager manager)
 	{
 		leftHandIndex = manager.GetJointIndex(KinectInterop.JointType.HandLeft);
 		rightHandIndex = manager.GetJointIndex(KinectInterop.JointType.HandRight);
@@ -165,19 +181,23 @@ public class KinectGestures
 		leftHipIndex = manager.GetJointIndex(KinectInterop.JointType.HipLeft);
 		rightHipIndex = manager.GetJointIndex(KinectInterop.JointType.HipRight);
 
+		leftKneeIndex = manager.GetJointIndex(KinectInterop.JointType.KneeLeft);
+		rightKneeIndex = manager.GetJointIndex(KinectInterop.JointType.KneeRight);
+		
 		leftAnkleIndex = manager.GetJointIndex(KinectInterop.JointType.AnkleLeft);
 		rightAnkleIndex = manager.GetJointIndex(KinectInterop.JointType.AnkleRight);
 		
 		int[] neededJointIndexes = {
 			leftHandIndex, rightHandIndex, leftElbowIndex, rightElbowIndex, leftShoulderIndex, rightShoulderIndex,
-			hipCenterIndex, shoulderCenterIndex, leftHipIndex, rightHipIndex, leftAnkleIndex, rightAnkleIndex
+			hipCenterIndex, shoulderCenterIndex, leftHipIndex, rightHipIndex, leftKneeIndex, rightKneeIndex, 
+			leftAnkleIndex, rightAnkleIndex
 		};
 
 		return neededJointIndexes;
 	}
 	
 
-	private static void SetGestureJoint(ref GestureData gestureData, float timestamp, int joint, Vector3 jointPos)
+	protected void SetGestureJoint(ref GestureData gestureData, float timestamp, int joint, Vector3 jointPos)
 	{
 		gestureData.joint = joint;
 		gestureData.jointPos = jointPos;
@@ -185,14 +205,14 @@ public class KinectGestures
 		gestureData.state++;
 	}
 	
-	private static void SetGestureCancelled(ref GestureData gestureData)
+	protected void SetGestureCancelled(ref GestureData gestureData)
 	{
 		gestureData.state = 0;
 		gestureData.progress = 0f;
 		gestureData.cancelled = true;
 	}
 	
-	private static void CheckPoseComplete(ref GestureData gestureData, float timestamp, Vector3 jointPos, bool isInPose, float durationToComplete)
+	protected void CheckPoseComplete(ref GestureData gestureData, float timestamp, Vector3 jointPos, bool isInPose, float durationToComplete)
 	{
 		if(isInPose)
 		{
@@ -213,11 +233,9 @@ public class KinectGestures
 		}
 	}
 	
-	private static void SetScreenPos(long userId, ref GestureData gestureData, ref Vector3[] jointsPos, ref bool[] jointsTracked)
+	protected void SetScreenPos(long userId, ref GestureData gestureData, ref Vector3[] jointsPos, ref bool[] jointsTracked)
 	{
 		Vector3 handPos = jointsPos[rightHandIndex];
-//		Vector3 elbowPos = jointsPos[rightElbowIndex];
-//		Vector3 shoulderPos = jointsPos[rightShoulderIndex];
 		bool calculateCoords = false;
 		
 		if(gestureData.joint == rightHandIndex)
@@ -232,23 +250,12 @@ public class KinectGestures
 			if(jointsTracked[leftHandIndex] /**&& jointsTracked[leftElbowIndex] && jointsTracked[leftShoulderIndex]*/)
 			{
 				handPos = jointsPos[leftHandIndex];
-//				elbowPos = jointsPos[leftElbowIndex];
-//				shoulderPos = jointsPos[leftShoulderIndex];
-				
 				calculateCoords = true;
 			}
 		}
 		
 		if(calculateCoords)
 		{
-//			if(gestureData.tagFloat == 0f || gestureData.userId != userId)
-//			{
-//				// get length from shoulder to hand (screen range)
-//				Vector3 shoulderToElbow = elbowPos - shoulderPos;
-//				Vector3 elbowToHand = handPos - elbowPos;
-//				gestureData.tagFloat = (shoulderToElbow.magnitude + elbowToHand.magnitude);
-//			}
-			
 			if(jointsTracked[hipCenterIndex] && jointsTracked[shoulderCenterIndex] && 
 				jointsTracked[leftShoulderIndex] && jointsTracked[rightShoulderIndex])
 			{
@@ -270,10 +277,6 @@ public class KinectGestures
 				}
 			}
 	
-//			Vector3 shoulderToHand = handPos - shoulderPos;
-//			gestureData.screenPos.x = Mathf.Clamp01((gestureData.tagFloat / 2 + shoulderToHand.x) / gestureData.tagFloat);
-//			gestureData.screenPos.y = Mathf.Clamp01((gestureData.tagFloat / 2 + shoulderToHand.y) / gestureData.tagFloat);
-			
 			if(gestureData.tagVector2.x != 0 && gestureData.tagVector2.y != 0)
 			{
 				Vector3 relHandPos = handPos - gestureData.tagVector;
@@ -281,11 +284,10 @@ public class KinectGestures
 				gestureData.screenPos.y = Mathf.Clamp01(relHandPos.y / gestureData.tagVector2.y);
 			}
 			
-			//Debug.Log(string.Format("{0} - S: {1}, H: {2}, SH: {3}, L : {4}", gestureData.gesture, shoulderPos, handPos, shoulderToHand, gestureData.tagFloat));
 		}
 	}
 	
-	private static void SetZoomFactor(long userId, ref GestureData gestureData, float initialZoom, ref Vector3[] jointsPos, ref bool[] jointsTracked)
+	protected void SetZoomFactor(long userId, ref GestureData gestureData, float initialZoom, ref Vector3[] jointsPos, ref bool[] jointsTracked)
 	{
 		Vector3 vectorZooming = jointsPos[rightHandIndex] - jointsPos[leftHandIndex];
 		
@@ -298,7 +300,7 @@ public class KinectGestures
 		gestureData.screenPos.z = initialZoom + (distZooming / gestureData.tagFloat);
 	}
 	
-	private static void SetWheelRotation(long userId, ref GestureData gestureData, Vector3 initialPos, Vector3 currentPos)
+	protected void SetWheelRotation(long userId, ref GestureData gestureData, Vector3 initialPos, Vector3 currentPos)
 	{
 		float angle = Vector3.Angle(initialPos, currentPos) * Mathf.Sign(currentPos.y - initialPos.y);
 		gestureData.screenPos.z = angle;
@@ -314,7 +316,7 @@ public class KinectGestures
 	/// <param name="timestamp">Current time</param>
 	/// <param name="jointsPos">Joints-position array</param>
 	/// <param name="jointsTracked">Joints-tracked array</param>
-	public static void CheckForGesture(long userId, ref GestureData gestureData, float timestamp, ref Vector3[] jointsPos, ref bool[] jointsTracked)
+	public virtual void CheckForGesture(long userId, ref GestureData gestureData, float timestamp, ref Vector3[] jointsPos, ref bool[] jointsTracked)
 	{
 		if(gestureData.complete)
 			return;
@@ -1356,8 +1358,8 @@ public class KinectGestures
 							if(isInPose)
 							{
 								// calculate lean angle
-								Vector3 vSpineLL = jointsPos[shoulderCenterIndex] - jointsPos[hipCenterIndex];
-								gestureData.screenPos.z = Vector3.Angle(Vector3.up, vSpineLL);
+								Vector3 vSpineLR = jointsPos[shoulderCenterIndex] - jointsPos[hipCenterIndex];
+								gestureData.screenPos.z = Vector3.Angle(Vector3.up, vSpineLR);
 								
 								gestureData.timestamp = timestamp;
 								gestureData.progress = 0.7f;
@@ -1442,7 +1444,65 @@ public class KinectGestures
 				}
 				break;
 				
-
+			case Gestures.Run:
+				switch(gestureData.state)
+				{
+				case 0:  // gesture detection - phase 1
+					// check if the left knee is up
+					if(jointsTracked[leftKneeIndex] && jointsTracked[rightKneeIndex] &&
+					   (jointsPos[leftKneeIndex].y - jointsPos[rightKneeIndex].y) > 0.1f)
+					{
+						SetGestureJoint(ref gestureData, timestamp, leftKneeIndex, jointsPos[leftKneeIndex]);
+						gestureData.progress = 0.3f;
+					}
+					break;
+					
+				case 1:  // gesture complete
+					if((timestamp - gestureData.timestamp) < 1.0f)
+					{
+						// check if the right knee is up
+						bool isInPose = jointsTracked[rightKneeIndex] && jointsTracked[leftKneeIndex] &&
+							(jointsPos[rightKneeIndex].y - jointsPos[leftKneeIndex].y) > 0.1f;
+						
+						if(isInPose)
+						{
+							// go to state 2
+							gestureData.timestamp = timestamp;
+							gestureData.progress = 0.7f;
+							gestureData.state = 2;
+						}
+					}
+					else
+					{
+						// cancel the gesture
+						SetGestureCancelled(ref gestureData);
+					}
+					break;
+					
+				case 2:  // gesture complete
+					if((timestamp - gestureData.timestamp) < 1.0f)
+					{
+						// check if the left knee is up again
+						bool isInPose = jointsTracked[leftKneeIndex] && jointsTracked[rightKneeIndex] &&
+							(jointsPos[leftKneeIndex].y - jointsPos[rightKneeIndex].y) > 0.1f;
+						
+						if(isInPose)
+						{
+							// go back to state 1
+							gestureData.timestamp = timestamp;
+							gestureData.progress = 0.8f;
+							gestureData.state = 1;
+						}
+					}
+					else
+					{
+						// cancel the gesture
+						SetGestureCancelled(ref gestureData);
+					}
+					break;
+				}
+				break;
+				
 			// here come more gesture-cases
 		}
 	}

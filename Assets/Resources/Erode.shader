@@ -38,21 +38,23 @@ Shader "Custom/Erode" {
 
             fixed4 frag (v2f i) : SV_Target
             {
-				   float minValue = 1.0;
-	               
-				   fixed4 texColor = tex2D (_MainTex, i.uv);
-				   for(int y=-1; y<2; y++)
-				     for(int x=-1; x<2; x++)
-					 {
-						 float val = tex2D (_MainTex, float2(i.uv.x + (float)x/_TexResX, i.uv.y +(float)y/_TexResY)).w;
-						 if(val>0.0)
-							val=1.0;
-						 if(val<minValue)
-							minValue=val;
-					 }
-				 
-					return fixed4(texColor.r, texColor.b, texColor.b, minValue);
-				  
+				fixed4 texColor = tex2D(_MainTex, i.uv);
+				float minValue = 1.0;
+
+				for(int y = -1; y < 2; y++)
+				{
+					for(int x = -1; x < 2; x++)
+				    {
+					    float val = tex2D(_MainTex, float2(i.uv.x + (float)x/_TexResX, i.uv.y + (float)y/_TexResY)).w;
+					    if(val > 0.0)
+					 	    val = 1.0;
+					    if(val < minValue)
+				 		    minValue = val;
+				    }
+				}
+
+				//return fixed4(texColor.r, texColor.b, texColor.b, minValue);
+				return fixed4(1.0, 1.0, 1.0, minValue);
             }
             ENDCG
 

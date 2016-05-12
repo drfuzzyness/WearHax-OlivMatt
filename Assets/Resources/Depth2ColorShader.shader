@@ -11,7 +11,7 @@
 		
 			CGPROGRAM
 			#pragma target 5.0
-			#pragma enable_d3d11_debug_symbols
+			//#pragma enable_d3d11_debug_symbols
 
 			#pragma vertex vert
 			#pragma fragment frag
@@ -45,13 +45,14 @@
 
 			float4 frag (v2f i) : COLOR
 			{
-				int dx = (int)(i.uv.x * _DepthResX);
-				int dy = (int)(i.uv.y * _DepthResY);
-				int di = (int)(dx + dy * _DepthResX);
+				float player = tex2D(_BodyTex, i.uv).w;
 				
-				float player = tex2D(_BodyTex, i.uv).r;
 				if (player != 0)
 				{
+					int dx = (int)(i.uv.x * _DepthResX);
+					int dy = (int)(i.uv.y * _DepthResY);
+					int di = (int)(dx + dy * _DepthResX);
+					
 					if (!isinf(_ColorCoords[di].x) && !isinf(_ColorCoords[di].y))
 					{
 						float ci_index, ci_length;

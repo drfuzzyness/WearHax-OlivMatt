@@ -431,7 +431,8 @@ public class OpenNI2Interface : DepthSensorInterface
 	{
 	}
 
-	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, ref Matrix4x4 kinectToWorld)
+	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, 
+	                           ref Matrix4x4 kinectToWorld, bool bIgnoreJointZ)
 	{
 		for(int i = 0; i < oniUsersCount; i++)
 		{
@@ -513,7 +514,8 @@ public class OpenNI2Interface : DepthSensorInterface
 					{
 						if(GetJointPosition(userId, oniJ, ref jointPosition))
 						{
-							jointData.kinectPos = new Vector3(jointPosition.x * 0.001f, jointPosition.y * 0.001f, jointPosition.z * 0.001f);;
+							float jPosZ = (bIgnoreJointZ && j > 0) ? bodyFrame.bodyData[i].joint[0].kinectPos.z : jointPosition.z * 0.001f;
+							jointData.kinectPos = new Vector3(jointPosition.x * 0.001f, jointPosition.y * 0.001f, jPosZ);;
 							jointData.position = kinectToWorld.MultiplyPoint3x4(jointData.kinectPos);
 						}
 					}
@@ -619,6 +621,11 @@ public class OpenNI2Interface : DepthSensorInterface
 		}
 
 		return spacePos;
+	}
+	
+	public bool MapDepthFrameToSpaceCoords (KinectInterop.SensorData sensorData, ref Vector3[] vSpaceCoords)
+	{
+		return false;
 	}
 	
 	public Vector2 MapDepthPointToColorCoords (KinectInterop.SensorData sensorData, Vector2 depthPos, ushort depthVal)
@@ -996,9 +1003,9 @@ public class OpenNI2Interface : DepthSensorInterface
 		bBackgroundRemovalInited = false;
 	}
 	
-	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor)
+	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor, bool bAlphaTexOnly)
 	{
-		return KinectInterop.UpdateBackgroundRemoval(sensorData, isHiResPrefered, defaultColor);
+		return KinectInterop.UpdateBackgroundRemoval(sensorData, isHiResPrefered, defaultColor, bAlphaTexOnly);
 	}
 	
 	public bool IsBackgroundRemovalActive()

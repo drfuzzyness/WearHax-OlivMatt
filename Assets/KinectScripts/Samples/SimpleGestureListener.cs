@@ -7,7 +7,7 @@ using System;
 public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListenerInterface
 {
 	[Tooltip("GUI-Text to display gesture-listener messages and gesture information.")]
-	public GUIText GestureInfo;
+	public GUIText gestureInfo;
 	
 	// private bool to track if progress message has been displayed
 	private bool progressDisplayed;
@@ -23,17 +23,19 @@ public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListen
 		manager.DetectGesture(userId, KinectGestures.Gestures.LeanLeft);
 		manager.DetectGesture(userId, KinectGestures.Gestures.LeanRight);
 
-		if(GestureInfo != null)
+		manager.DetectGesture(userId, KinectGestures.Gestures.Run);
+
+		if(gestureInfo != null)
 		{
-			GestureInfo.GetComponent<GUIText>().text = "Swipe, Jump, Squat or Lean.";
+			gestureInfo.GetComponent<GUIText>().text = "Swipe, Jump, Squat or Lean.";
 		}
 	}
 	
 	public void UserLost(long userId, int userIndex)
 	{
-		if(GestureInfo != null)
+		if(gestureInfo != null)
 		{
-			GestureInfo.GetComponent<GUIText>().text = string.Empty;
+			gestureInfo.GetComponent<GUIText>().text = string.Empty;
 		}
 	}
 
@@ -42,27 +44,37 @@ public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListen
 	{
 		if((gesture == KinectGestures.Gestures.ZoomOut || gesture == KinectGestures.Gestures.ZoomIn) && progress > 0.5f)
 		{
-			string sGestureText = string.Format ("{0} - {1:F0}%", gesture, screenPos.z * 100f);
-			if(GestureInfo != null)
+			if(gestureInfo != null)
 			{
-				GestureInfo.GetComponent<GUIText>().text = sGestureText;
+				string sGestureText = string.Format ("{0} - {1:F0}%", gesture, screenPos.z * 100f);
+				gestureInfo.GetComponent<GUIText>().text = sGestureText;
+				
+				progressDisplayed = true;
+				progressGestureTime = Time.realtimeSinceStartup;
 			}
-
-			progressDisplayed = true;
-			progressGestureTime = Time.realtimeSinceStartup;
 		}
 		else if((gesture == KinectGestures.Gestures.Wheel || gesture == KinectGestures.Gestures.LeanLeft || 
 		         gesture == KinectGestures.Gestures.LeanRight) && progress > 0.5f)
 		{
-			string sGestureText = string.Format ("{0} - {1:F0} degrees", gesture, screenPos.z);
-			if(GestureInfo != null)
+			if(gestureInfo != null)
 			{
-				GestureInfo.GetComponent<GUIText>().text = sGestureText;
+				string sGestureText = string.Format ("{0} - {1:F0} degrees", gesture, screenPos.z);
+				gestureInfo.GetComponent<GUIText>().text = sGestureText;
+				
+				progressDisplayed = true;
+				progressGestureTime = Time.realtimeSinceStartup;
 			}
-
-			//Debug.Log(sGestureText);
-			progressDisplayed = true;
-			progressGestureTime = Time.realtimeSinceStartup;
+		}
+		else if(gesture == KinectGestures.Gestures.Run && progress > 0.5f)
+		{
+			if(gestureInfo != null)
+			{
+				string sGestureText = string.Format ("{0} - progress: {1:F0}%", gesture, progress * 100);
+				gestureInfo.GetComponent<GUIText>().text = sGestureText;
+				
+				progressDisplayed = true;
+				progressGestureTime = Time.realtimeSinceStartup;
+			}
 		}
 	}
 
@@ -73,9 +85,9 @@ public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListen
 			return true;
 
 		string sGestureText = gesture + " detected";
-		if(GestureInfo != null)
+		if(gestureInfo != null)
 		{
-			GestureInfo.GetComponent<GUIText>().text = sGestureText;
+			gestureInfo.GetComponent<GUIText>().text = sGestureText;
 		}
 		
 		return true;
@@ -88,9 +100,9 @@ public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListen
 		{
 			progressDisplayed = false;
 
-			if(GestureInfo != null)
+			if(gestureInfo != null)
 			{
-				GestureInfo.GetComponent<GUIText>().text = String.Empty;
+				gestureInfo.GetComponent<GUIText>().text = String.Empty;
 			}
 		}
 		
@@ -103,9 +115,9 @@ public class SimpleGestureListener : MonoBehaviour, KinectGestures.GestureListen
 		{
 			progressDisplayed = false;
 			
-			if(GestureInfo != null)
+			if(gestureInfo != null)
 			{
-				GestureInfo.GetComponent<GUIText>().text = String.Empty;
+				gestureInfo.GetComponent<GUIText>().text = String.Empty;
 			}
 
 			Debug.Log("Forced progress to end.");

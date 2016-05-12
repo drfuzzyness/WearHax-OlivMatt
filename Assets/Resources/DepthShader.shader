@@ -10,7 +10,7 @@
 		
 			CGPROGRAM
 			#pragma target 5.0
-			#pragma enable_d3d11_debug_symbols
+			//#pragma enable_d3d11_debug_symbols
 
 			#pragma vertex vert
 			#pragma fragment frag
@@ -21,9 +21,11 @@
 			uniform float _TexResX;
 			uniform float _TexResY;
 			uniform float _TotalPoints;
+			uniform int _FirstUserIndex;
 
 			StructuredBuffer<float> _DepthBuffer;
 			StructuredBuffer<float> _HistBuffer;
+			StructuredBuffer<float> _BodyIndexBuffer;
 
 			struct v2f {
 				float4 pos : SV_POSITION;
@@ -46,26 +48,46 @@
 				int dy = (int)(i.uv.y * _TexResY);
 				int di = (int)(dx + dy * _TexResX);
 				
-				float player = tex2D(_MainTex, i.uv).r;
-				if (player != 0)
+				//float player = tex2D(_MainTex, i.uv).w;
+				//int playerIndex = (int)(player * 255);
+				
+				float playerIndex = (int)_BodyIndexBuffer[di];
+				
+				//if (player != 0)
+				if (playerIndex != 255)
 				{
 					int depth = (int)_DepthBuffer[di];
 					float hist = 1 - (_HistBuffer[depth] / _TotalPoints);
 					
-					switch(((int)(player * 255)) % 4)
+					if((playerIndex % 8) == _FirstUserIndex)
 					{
-						case 0:
-							return float4(hist, 0, 0, 1);  // red
-						case 1:
-							return float4(0, hist, 0, 1);  // green
-						case 2:
-							return float4(0, 0, hist, 1);  // blue
-						case 3:
-							return float4(hist, 0, hist, 1);  // magenta
+						return float4(hist, hist, 0, 1);  // yellow
+					}
+					else
+					{
+						switch(playerIndex % 4)
+						{
+							case 0:
+								return float4(hist, 0, 0, 0.9);  // red
+							case 1:
+								return float4(0, hist, 0, 0.9);  // green
+							case 2:
+								return float4(0, 0, hist, 0.9);  // blue
+							case 3:
+								return float4(hist, 0, hist, 0.9);  // magenta
+						}
 					}
 					
 					return float4(hist, hist, hist, 1); // white
 				}
+//				else
+//				{
+//					float depth = _DepthBuffer[di];
+//					if(depth == 0) depth = 5000;
+//					float hist = 1 - depth / 5000;
+//					
+//					return float4(hist, hist, hist, 1); // gray
+//				}
 				
 				return float4(0, 0, 0, 0);  // invisible
 			}

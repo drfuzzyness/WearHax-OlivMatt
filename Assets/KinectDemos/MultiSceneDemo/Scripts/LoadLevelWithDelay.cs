@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class LoadLevelWithDelay : MonoBehaviour 
 {
@@ -43,7 +44,7 @@ public class LoadLevelWithDelay : MonoBehaviour
 			if(Time.realtimeSinceStartup >= timeToLoadLevel)
 			{
 				levelLoaded = true;
-				Application.LoadLevel(nextLevel);
+				SceneManager.LoadScene(nextLevel);
 			}
 			else
 			{

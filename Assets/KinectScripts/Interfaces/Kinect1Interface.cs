@@ -864,7 +864,7 @@ public class Kinect1Interface : DepthSensorInterface
 			}
 		}
 		
-		if(bHandPrimary)
+		//if(bHandPrimary)
 		{
 			switch(lastHandEvent[skeletonId])
 			{
@@ -877,19 +877,20 @@ public class Kinect1Interface : DepthSensorInterface
 					break;
 			}
 		}
-		else
-		{
-//			if(lastHandEvent[skeletonId] != InteractionHandEventType.Release)
-//			{
-//				Debug.Log(string.Format("{0} - old: {1}, NONE: {2}", skeletonId, lastHandEvent[skeletonId], InteractionHandEventType.Release));
-//				lastHandEvent[skeletonId] = InteractionHandEventType.Release;
-//			}
-
-			refHandState = KinectInterop.HandState.NotTracked;
-		}
+//		else
+//		{
+////			if(lastHandEvent[skeletonId] != InteractionHandEventType.Release)
+////			{
+////				Debug.Log(string.Format("{0} - old: {1}, NONE: {2}", skeletonId, lastHandEvent[skeletonId], InteractionHandEventType.Release));
+////				lastHandEvent[skeletonId] = InteractionHandEventType.Release;
+////			}
+//
+//			refHandState = KinectInterop.HandState.NotTracked;
+//		}
 	}
 
-	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, ref Matrix4x4 kinectToWorld)
+	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, 
+	                           ref Matrix4x4 kinectToWorld, bool bIgnoreJointZ)
 	{
 		// get next body frame
 		int hr = NuiSkeletonGetNextFrame(0, ref skeletonFrame);
@@ -926,7 +927,9 @@ public class Kinect1Interface : DepthSensorInterface
 						
 						if(jointData.trackingState != KinectInterop.TrackingState.NotTracked)
 						{
-							jointData.kinectPos = body.SkeletonPositions[j];
+							//jointData.kinectPos = body.SkeletonPositions[j];
+							float jPosZ = (bIgnoreJointZ && j > 0) ? bodyFrame.bodyData[i].joint[0].kinectPos.z : body.SkeletonPositions[j].z;
+							jointData.kinectPos = new Vector3(body.SkeletonPositions[j].x, body.SkeletonPositions[j].y, jPosZ);
 							jointData.position = kinectToWorld.MultiplyPoint3x4(jointData.kinectPos);
 						}
 						
@@ -1135,6 +1138,32 @@ public class Kinect1Interface : DepthSensorInterface
 		return point;
 	}
 
+	public bool MapDepthFrameToSpaceCoords (KinectInterop.SensorData sensorData, ref Vector3[] vSpaceCoords)
+	{
+		// comment out this block of code, if you experience big lags (it is used for creating user or scene visualizations in 3d space)
+		if(sensorData.depthImage != null)
+		{
+			int i = 0;
+
+			for(int y = 0; y < sensorData.depthImageHeight; y++)
+			{
+				for(int x = 0; x < sensorData.depthImageWidth; x++)
+				{
+					float fDepthX = (float)x / sensorData.depthImageWidth;
+					float fDepthY = (float)y / sensorData.depthImageHeight;
+					ushort depthVal = sensorData.depthImage[i];
+
+					vSpaceCoords[i] = NuiTransformDepthImageToSkeleton(fDepthX, fDepthY, depthVal);
+					i++;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	public Vector2 MapDepthPointToColorCoords (KinectInterop.SensorData sensorData, Vector2 depthPos, ushort depthVal)
 	{
 		int cx, cy;
@@ -1150,32 +1179,31 @@ public class Kinect1Interface : DepthSensorInterface
 
 	public bool MapDepthFrameToColorCoords (KinectInterop.SensorData sensorData, ref Vector2[] vColorCoords)
 	{
-		// uncomment this block of code, if you need the user cut-out image (lowers the FPS a lot)
-		
-//		if(sensorData.depthImage != null && sensorData.colorImage != null)
-//		{
-//			int i = 0, cx = 0, cy = 0;
-//			
-//			for(int y = 0; y < sensorData.depthImageHeight; y++)
-//			{
-//				for(int x = 0; x < sensorData.depthImageWidth; x++)
-//				{
-//					ushort dv = sensorData.depthImage[i];
-//
-//					NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
-//						Constants.ColorImageResolution,
-//						Constants.DepthImageResolution,
-//						ref pcViewArea,
-//						x, y, (ushort)(dv << 3),
-//						out cx, out cy);
-//
-//					vColorCoords[i] = new Vector2(cx, cy);
-//					i++;
-//				}
-//			}
-//			
-//			return true;
-//		}
+		// comment out this block of code, if you experience big lags (it is used for creating cut-out texture of the users)
+		if(sensorData.depthImage != null && sensorData.colorImage != null)
+		{
+			int i = 0, cx = 0, cy = 0;
+			
+			for(int y = 0; y < sensorData.depthImageHeight; y++)
+			{
+				for(int x = 0; x < sensorData.depthImageWidth; x++)
+				{
+					ushort dv = sensorData.depthImage[i];
+
+					NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
+						Constants.ColorImageResolution,
+						Constants.DepthImageResolution,
+						ref pcViewArea,
+						x, y, (ushort)(dv << 3),
+						out cx, out cy);
+
+					vColorCoords[i] = new Vector2(cx, cy);
+					i++;
+				}
+			}
+			
+			return true;
+		}
 
 		return false;
 	}
@@ -1724,7 +1752,7 @@ public class Kinect1Interface : DepthSensorInterface
 		bBackgroundRemovalInited = false;
 	}
 	
-	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor)
+	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor, bool bAlphaTexOnly)
 	{
 		int hr = UpdateBackgroundRemovalNative();
 		return (hr >= 0);

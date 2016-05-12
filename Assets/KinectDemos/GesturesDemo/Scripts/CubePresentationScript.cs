@@ -17,7 +17,7 @@ public class CubePresentationScript : MonoBehaviour
 	public List<GameObject> cubeSides;
 	
 
-	private int maxSides = 0;
+	//private int maxSides = 0;
 	private int maxTextures = 0;
 	private int side = 0;
 	private int tex = 0;
@@ -36,10 +36,10 @@ public class CubePresentationScript : MonoBehaviour
 	void Start() 
 	{
 		// hide mouse cursor
-		Cursor.visible = false;
+		//Cursor.visible = false;
 		
 		// calculate max slides and textures
-		maxSides = cubeSides.Count;
+		//maxSides = cubeSides.Count;
 		maxTextures = slideTextures.Count;
 		
 		initialRotation = transform.rotation;

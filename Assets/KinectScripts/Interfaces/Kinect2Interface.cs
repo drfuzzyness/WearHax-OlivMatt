@@ -66,6 +66,15 @@ public class Kinect2Interface : DepthSensorInterface
 	[DllImport("Kinect2SpeechWrapper", EntryPoint = "AddGrammarPhrase")]
 	private static extern int AddGrammarPhraseNative([MarshalAs(UnmanagedType.LPWStr)]string sFromRule, [MarshalAs(UnmanagedType.LPWStr)]string sToRule, [MarshalAs(UnmanagedType.LPWStr)]string sPhrase, bool bClearRule, bool bCommitGrammar);
 
+	[DllImport("Kinect2SpeechWrapper", EntryPoint = "AddSpeechGrammar")]
+	private static extern int AddSpeechGrammarNative([MarshalAs(UnmanagedType.LPWStr)]string sFileName, short iNewLangCode, bool bDynamic);
+	
+	[DllImport("Kinect2SpeechWrapper", EntryPoint = "AddPhraseToGrammar")]
+	private static extern int AddPhraseToGrammarNative([MarshalAs(UnmanagedType.LPWStr)]string sGrammarName, [MarshalAs(UnmanagedType.LPWStr)]string sFromRule, [MarshalAs(UnmanagedType.LPWStr)]string sToRule, [MarshalAs(UnmanagedType.LPWStr)]string sPhrase, bool bClearRule, bool bCommitGrammar);
+	
+	[DllImport("Kinect2SpeechWrapper", EntryPoint = "SetGrammarState")]
+	private static extern int SetGrammarStateNative([MarshalAs(UnmanagedType.LPWStr)]string sGrammarName, bool bEnableGrammar);
+	
 	[DllImport("Kinect2SpeechWrapper", EntryPoint = "SetRequiredConfidence")]
 	private static extern void SetSpeechConfidenceNative(float fConfidence);
 	
@@ -518,7 +527,8 @@ public class Kinect2Interface : DepthSensorInterface
 		}
 	}
 
-	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, ref Matrix4x4 kinectToWorld)
+	public bool PollBodyFrame (KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, 
+	                           ref Matrix4x4 kinectToWorld, bool bIgnoreJointZ)
 	{
 		bool bNewFrame = false;
 		
@@ -585,7 +595,8 @@ public class Kinect2Interface : DepthSensorInterface
 
 							if((int)joint.TrackingState != (int)TrackingState.NotTracked)
 							{
-								jointData.kinectPos = new Vector3(joint.Position.X, joint.Position.Y, joint.Position.Z);
+								float jPosZ = (bIgnoreJointZ && j > 0) ? bodyFrame.bodyData[i].joint[0].kinectPos.z : joint.Position.Z;
+								jointData.kinectPos = new Vector3(joint.Position.X, joint.Position.Y, jPosZ);
 								jointData.position = kinectToWorld.MultiplyPoint3x4(jointData.kinectPos);
 							}
 							
@@ -842,6 +853,28 @@ public class Kinect2Interface : DepthSensorInterface
 		return vPoint;
 	}
 
+	public bool MapDepthFrameToSpaceCoords (KinectInterop.SensorData sensorData, ref Vector3[] vSpaceCoords)
+	{
+		if(coordMapper != null && sensorData.depthImage != null)
+		{
+			var pDepthData = GCHandle.Alloc(sensorData.depthImage, GCHandleType.Pinned);
+			var pSpaceCoordsData = GCHandle.Alloc(vSpaceCoords, GCHandleType.Pinned);
+			
+			coordMapper.MapDepthFrameToCameraSpaceUsingIntPtr(
+				pDepthData.AddrOfPinnedObject(), 
+				sensorData.depthImage.Length * sizeof(ushort),
+				pSpaceCoordsData.AddrOfPinnedObject(), 
+				(uint)vSpaceCoords.Length);
+			
+			pSpaceCoordsData.Free();
+			pDepthData.Free();
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
 	public Vector2 MapDepthPointToColorCoords (KinectInterop.SensorData sensorData, Vector2 depthPos, ushort depthVal)
 	{
 		Vector2 vPoint = Vector2.zero;
@@ -1067,12 +1100,12 @@ public class Kinect2Interface : DepthSensorInterface
 				| FaceFrameFeatures.PointsInColorSpace
 				//| FaceFrameFeatures.PointsInInfraredSpace
 				| FaceFrameFeatures.RotationOrientation
-				| FaceFrameFeatures.FaceEngagement
+				//| FaceFrameFeatures.FaceEngagement
 				//| FaceFrameFeatures.Glasses
 				//| FaceFrameFeatures.Happy
 				//| FaceFrameFeatures.LeftEyeClosed
 				//| FaceFrameFeatures.RightEyeClosed
-				| FaceFrameFeatures.LookingAway
+				//| FaceFrameFeatures.LookingAway
 				//| FaceFrameFeatures.MouthMoved
 				//| FaceFrameFeatures.MouthOpen
 				;
@@ -1633,6 +1666,14 @@ public class Kinect2Interface : DepthSensorInterface
 	public int LoadSpeechGrammar(string sFileName, short iLangCode, bool bDynamic)
 	{
 		return LoadSpeechGrammarNative(sFileName, iLangCode, bDynamic);
+
+//		int hr = AddSpeechGrammarNative(sFileName, iLangCode, bDynamic);
+//		if(hr >= 0)
+//		{
+//			hr = SetGrammarStateNative(sFileName, true);
+//		}
+//
+//		return hr;
 	}
 
 	public int AddGrammarPhrase(string sFromRule, string sToRule, string sPhrase, bool bClearRulePhrases, bool bCommitGrammar)
@@ -1695,9 +1736,9 @@ public class Kinect2Interface : DepthSensorInterface
 		bBackgroundRemovalInited = false;
 	}
 	
-	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor)
+	public bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor, bool bAlphaTexOnly)
 	{
-		return KinectInterop.UpdateBackgroundRemoval(sensorData, isHiResPrefered, defaultColor);
+		return KinectInterop.UpdateBackgroundRemoval(sensorData, isHiResPrefered, defaultColor, bAlphaTexOnly);
 	}
 
 	public bool IsBackgroundRemovalActive()
