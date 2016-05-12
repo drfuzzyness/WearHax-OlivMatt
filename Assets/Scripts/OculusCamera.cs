@@ -19,11 +19,11 @@ public class OculusCamera : MonoBehaviour {
 		anchorYRotation = anchorObj.transform.localRotation.y;
 		if (anchorYRotation >= .3f){
 			anchorYRotation.Remap(.3f,1f,0f,100f);
-			transform.parent.Rotate (Vector3.up * -anchorYRotation * rotScale);
+			transform.parent.Rotate (Vector3.up * anchorYRotation * rotScale);
 		}
 				else if( anchorYRotation <= -.3f){
 			anchorYRotation.Remap(-.3f,-1f,0f,-100f);
-			transform.parent.Rotate (Vector3.up * -anchorYRotation * rotScale);
+			transform.parent.Rotate (Vector3.up * anchorYRotation * rotScale);
 			}
 //		pos = UnityEngine.VR.InputTracking.GetLocalPosition (UnityEngine.VR.VRNode);
 		//transform.position = Vector3.zero + anchorObj.transform.localPosition.y * Vector3.up * scalePositionalInput;
