@@ -7,7 +7,9 @@ public class SpawnByDistance : MonoBehaviour {
 	public float distSpawn=20f;
 	public Transform player;
 	public GameObject child;
+    public Vector3 startPos;
 	void Awake () {
+        startPos = transform.position;
 		child = GetComponentInChildren<MoveFractures> ().gameObject;
 		player = GameObject.Find ("PlayerHolder").transform;
 		child.SetActive (false);
@@ -15,10 +17,14 @@ public class SpawnByDistance : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		float distPlayer = Vector3.Distance (player.position, transform.position);
-		if (distPlayer <= distSpawn && !child.activeSelf) {
+		float distPlayer = Vector3.Distance (player.position, startPos);
+		if (distPlayer <= distSpawn) {
 			child.SetActive(true);
 
 		}
+        else
+        {
+            child.SetActive(false);
+        }
 	}
 }

@@ -19,6 +19,7 @@ public class MissileReplace : MonoBehaviour {
 		fractureProxy.GetComponent<MoveFractures>().MissileReplace(transform.position,transform.rotation);
 		foreach (SetStuff thing in fractureProxy.GetComponentsInChildren<SetStuff>()) {
 			thing.Go();
+            
 		}
 		Destroy (transform.parent.parent.gameObject);
 		

@@ -7,6 +7,8 @@ public class MissileShooter : MonoBehaviour {
     public bool lookingAtMeteor;
 
     public GameObject playerMissile;
+    public GameObject missilePickup;
+
     public Transform leftHand;
     public GameObject targetSphere;
     // Use this for initializationp
@@ -38,10 +40,6 @@ public class MissileShooter : MonoBehaviour {
 
             }
 
-            if (lookingAtMeteor && Input.GetKeyDown(KeyCode.U))
-            {
-                Instantiate(playerMissile, leftHand.position, leftHand.rotation);
-            }
 
         }
 
@@ -59,6 +57,18 @@ public class MissileShooter : MonoBehaviour {
         targetSphere.transform.localScale = Vector3.one * (1.2f + val);
 	
 	}
+    public void GiveAmmoFromBuilding( Transform buildingPos )
+    {
+        //Instantiate(missilePickup,buildingPos.position+Vector3.up*10f,Quaternion.Identity);
+    }
+
+    public void ShootTheShot()
+    {
+        if (lookingAtMeteor)
+        {
+            Instantiate(playerMissile, leftHand.position, leftHand.rotation);
+        }
+    }
 
 
 
