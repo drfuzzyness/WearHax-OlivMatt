@@ -59,7 +59,7 @@ public class MissileShooter : MonoBehaviour {
 	}
     public void GiveAmmoFromBuilding( Transform buildingPos )
     {
-        //Instantiate(missilePickup,buildingPos.position+Vector3.up*10f,Quaternion.Identity);
+        Instantiate(missilePickup,buildingPos.position+Vector3.up*10f,Quaternion.identity);
     }
 
     public void ShootTheShot()

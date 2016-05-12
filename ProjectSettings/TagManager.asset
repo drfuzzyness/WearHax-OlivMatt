@@ -9,6 +9,7 @@ TagManager:
   - Meteor
   - MeteorInner
   - MeteorKill
+  - player
   layers:
   - Default
   - TransparentFX
