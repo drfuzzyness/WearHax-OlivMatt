@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: ae23d50304c93b9418b65cec8f9fe954
-timeCreated: 1434059968
+timeCreated: 1453663676
 licenseType: Store
 ModelImporter:
   serializedVersion: 18
@@ -441,7 +441,7 @@ ModelImporter:
         value: {x: .0126743643, y: 0, z: .00633718213}
         length: .0158429593
         modified: 1
-    - boneName: joint_RingALT
+    - boneName: joint_FingersALT
       humanName: Left Middle Proximal
       limit:
         min: {x: 0, y: -7.50000048, z: -50}
@@ -449,7 +449,7 @@ ModelImporter:
         value: {x: .026415633, y: 0, z: .0132078165}
         length: .0330195501
         modified: 1
-    - boneName: joint_RingBLT
+    - boneName: joint_FingersBLT
       humanName: Left Middle Intermediate
       limit:
         min: {x: 0, y: 0, z: -45}
@@ -457,7 +457,7 @@ ModelImporter:
         value: {x: .0149887409, y: 0, z: .00749437045}
         length: .0187359303
         modified: 1
-    - boneName: joint_RingCLT
+    - boneName: joint_FingersCLT
       humanName: Left Middle Distal
       limit:
         min: {x: 0, y: 0, z: -45}
@@ -537,7 +537,7 @@ ModelImporter:
         value: {x: .0126744118, y: 0, z: .00633720588}
         length: .0158430189
         modified: 1
-    - boneName: joint_RingART
+    - boneName: joint_FingersART
       humanName: Right Middle Proximal
       limit:
         min: {x: 0, y: -7.50000048, z: -50}
@@ -545,7 +545,7 @@ ModelImporter:
         value: {x: .0264154449, y: 0, z: .0132077225}
         length: .0330193155
         modified: 1
-    - boneName: joint_RingBRT
+    - boneName: joint_FingersBRT
       humanName: Right Middle Intermediate
       limit:
         min: {x: 0, y: 0, z: -45}
@@ -553,7 +553,7 @@ ModelImporter:
         value: {x: .0149889346, y: 0, z: .00749446731}
         length: .0187361725
         modified: 1
-    - boneName: joint_RingCRT
+    - boneName: joint_FingersCRT
       humanName: Right Middle Distal
       limit:
         min: {x: 0, y: 0, z: -45}
@@ -611,6 +611,54 @@ ModelImporter:
         modified: 1
     - boneName: joint_ToeRT
       humanName: RightToes
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingALT
+      humanName: Left Ring Proximal
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingBLT
+      humanName: Left Ring Intermediate
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingCLT
+      humanName: Left Ring Distal
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingART
+      humanName: Right Ring Proximal
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingBRT
+      humanName: Right Ring Intermediate
+      limit:
+        min: {x: 0, y: 0, z: -50}
+        max: {x: 0, y: 0, z: 50}
+        value: {x: .0107526481, y: 0, z: .00537632406}
+        length: .0134408148
+        modified: 1
+    - boneName: joint_RingCRT
+      humanName: Right Ring Distal
       limit:
         min: {x: 0, y: 0, z: -50}
         max: {x: 0, y: 0, z: 50}

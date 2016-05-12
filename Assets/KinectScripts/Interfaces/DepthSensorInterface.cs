@@ -40,7 +40,7 @@ public interface DepthSensorInterface
 
 	// polls for new body/skeleton frame. must fill in all needed body and joints' elements (tracking state and position)
 	// returns true if new body frame is available, false otherwise
-	bool PollBodyFrame(KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, ref Matrix4x4 kinectToWorld);
+	bool PollBodyFrame(KinectInterop.SensorData sensorData, ref KinectInterop.BodyFrameData bodyFrame, ref Matrix4x4 kinectToWorld, bool bIgnoreJointZ);
 
 	// polls for new color frame data
 	// returns true if new color frame is available, false otherwise
@@ -65,6 +65,10 @@ public interface DepthSensorInterface
 
 	// returns 3d Kinect-space coordinates for the given depth frame point
 	Vector3 MapDepthPointToSpaceCoords(KinectInterop.SensorData sensorData, Vector2 depthPos, ushort depthVal);
+
+	// estimates all space coordinates for the current depth frame
+	// returns true on success, false otherwise
+	bool MapDepthFrameToSpaceCoords (KinectInterop.SensorData sensorData, ref Vector3[] vSpaceCoords);
 
 	// returns color-space coordinates for the given depth point
 	Vector2 MapDepthPointToColorCoords(KinectInterop.SensorData sensorData, Vector2 depthPos, ushort depthVal);
@@ -192,7 +196,7 @@ public interface DepthSensorInterface
 	
 	// this method gets invoked periodically to update the background removal
 	// returns true if update is successful, false otherwise
-	bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor);
+	bool UpdateBackgroundRemoval(KinectInterop.SensorData sensorData, bool isHiResPrefered, Color32 defaultColor, bool bAlphaTexOnly);
 	
 	// returns true if background removal is initialized, false otherwise
 	bool IsBackgroundRemovalActive();

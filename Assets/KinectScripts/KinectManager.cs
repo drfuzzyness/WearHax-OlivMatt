@@ -22,9 +22,10 @@ public class KinectManager : MonoBehaviour
 	public enum AutoHeightAngle : int { DontUse, ShowInfoOnly, AutoUpdate, AutoUpdateAndShowInfo }
 	[Tooltip("Whether to automatically set the sensor height and angle or not. The user must stay in front of the sensor, in order the automatic detection to work.")]
 	public AutoHeightAngle autoHeightAngle = AutoHeightAngle.DontUse;
-	
-	[Tooltip("Whether to utilize the user and depth maps.")]
-	public bool computeUserMap = false;
+
+	public enum UserMapType : int { None, RawUserDepth, BodyTexture, UserTexture, CutOutTexture }
+	[Tooltip("Whether and how to utilize the user and depth maps.")]
+	public UserMapType computeUserMap = UserMapType.RawUserDepth;
 	
 	[Tooltip("Whether to utilize the color camera image.")]
 	public bool computeColorMap = false;
@@ -57,14 +58,23 @@ public class KinectManager : MonoBehaviour
 	[Tooltip("Maximum distance to a user, in order to be considered for skeleton data processing. Value of 0 means no maximum distance limitation.")]
 	public float maxUserDistance = 0f;
 	
+	[Tooltip("Maximum left or right distance to a user, in order to be considered for skeleton data processing. Value of 0 means no left/right distance limitation.")]
+	public float maxLeftRightDistance = 0f;
+	
 	[Tooltip("Maximum number of users, which may be tracked simultaneously.")]
 	public int maxTrackedUsers = 6;
+
+	[Tooltip("Whether to display the tracked users within the allowed distance only, or all users (higher fps).")]
+	public bool showTrackedUsersOnly = true;
 	
-	[Tooltip("Whether to detect only closest user first or not.")]
+	[Tooltip("Whether to detect only the closest user first or not.")]
 	public bool detectClosestUser = true;
 
 	[Tooltip("Whether to utilize only the tracked joints (and ignore the inferred ones) or not.")]
 	public bool ignoreInferredJoints = false;
+	
+	[Tooltip("Whether to ignore the Z-coordinates of the joints (i.e. use them in 2D-scenes) or not.")]
+	public bool ignoreZCoordinates = false;
 	
 	[Tooltip("Whether to update the AvatarControllers in LateUpdate(), instead of in Update(). Needed for Mocap-Mecanim blending.")]
 	public bool lateUpdateAvatars = false;
@@ -84,6 +94,9 @@ public class KinectManager : MonoBehaviour
 	[Tooltip("Allowed wrist and hand rotations. None - no hand rotations, Default - hand rotations are allowed except the twists, All - all rotations are allowed.")]
 	public AllowedRotations allowedHandRotations = AllowedRotations.Default;
 
+	[Tooltip("Wait time in seconds, before a lost user gets removed. This is to prevent sporadical user switches.")]
+	public float waitTimeBeforeRemove = 1f;
+
 	[Tooltip("List of the controlled avatars in the scene. If the list is empty, the available avatar controllers will be detected at start up.")]
 	public List<AvatarController> avatarControllers = new List<AvatarController>();
 	
@@ -96,9 +109,12 @@ public class KinectManager : MonoBehaviour
 	[Tooltip("Minimum time between gesture detections (in seconds).")]
 	public float minTimeBetweenGestures = 0.7f;
 	
-	[Tooltip("List of the utilized gesture listeners. They must implement KinectGestures.GestureListenerInterface. If the list is empty, the available gesture listeners will be detected at start up.")]
-	public List<MonoBehaviour> gestureListeners = new List<MonoBehaviour>();
+	[Tooltip("Gesture manager, used to detect programmatic Kinect gestures.")]
+	public KinectGestures gestureManager;
 	
+	[Tooltip("List of the available gesture listeners. They must implement KinectGestures.GestureListenerInterface. If the list is empty, the available gesture listeners will be detected at start up.")]
+	public List<MonoBehaviour> gestureListeners = new List<MonoBehaviour>();
+
 	[Tooltip("GUI-Text to display user detection messages.")]
 	public GUIText calibrationText;
 	
@@ -107,68 +123,75 @@ public class KinectManager : MonoBehaviour
 
 	
 	// Bool to keep track of whether Kinect has been initialized
-	private bool kinectInitialized = false; 
+	protected bool kinectInitialized = false; 
 	
 	// The singleton instance of KinectManager
-	private static KinectManager instance = null;
+	protected static KinectManager instance = null;
 
 	// available sensor interfaces
-	private List<DepthSensorInterface> sensorInterfaces = null;
+	protected List<DepthSensorInterface> sensorInterfaces = null;
 	// primary SensorData structure
-	private KinectInterop.SensorData sensorData = null;
+	protected KinectInterop.SensorData sensorData = null;
 
 	// Depth and user maps
-//	private KinectInterop.DepthBuffer depthImage;
-//	private KinectInterop.BodyIndexBuffer bodyIndexImage;
-//	private KinectInterop.UserHistogramBuffer userHistogramImage;
-	private Color32[] usersHistogramImage;
-	private ushort[] usersPrevState;
-	private float[] usersHistogramMap;
+	//protected KinectInterop.DepthBuffer depthImage;
+	//protected KinectInterop.BodyIndexBuffer bodyIndexImage;
+	//protected KinectInterop.UserHistogramBuffer userHistogramImage;
+	protected Color32[] usersHistogramImage;
+	protected ushort[] usersPrevState;
+	protected float[] usersHistogramMap;
 
-	private Texture2D usersLblTex;
-	private Rect usersMapRect;
-	private int usersMapSize;
-//	private int minDepth;
-//	private int maxDepth;
+	protected Texture2D usersLblTex;
+	protected Rect usersMapRect;
+	protected int usersMapSize;
+	//protected int minDepth;
+	//protected int maxDepth;
 	
 	// Color map
-	//private KinectInterop.ColorBuffer colorImage;
-	//private Texture2D usersClrTex;
-	private Rect usersClrRect;
-	private int usersClrSize;
+	//protected KinectInterop.ColorBuffer colorImage;
+	//protected Texture2D usersClrTex;
+	protected Rect usersClrRect;
+	protected int usersClrSize;
 	
 	// Kinect body frame data
-	private KinectInterop.BodyFrameData bodyFrame;
+	protected KinectInterop.BodyFrameData bodyFrame;
 	//private Int64 lastBodyFrameTime = 0;
 	
 	// List of all users
-	private List<Int64> alUserIds = new List<Int64>();
-	private Dictionary<Int64, int> dictUserIdToIndex = new Dictionary<Int64, int>();
+	protected List<Int64> alUserIds = new List<Int64>();
+	protected Dictionary<Int64, int> dictUserIdToIndex = new Dictionary<Int64, int>();
+	protected Int64[] aUserIndexIds = new Int64[KinectInterop.Constants.MaxBodyCount];
+	protected Dictionary<Int64, float> dictUserIdToTime = new Dictionary<Int64, float>();
 
 	// Whether the users are limited by number or distance
-	private bool bLimitedUsers = false;
+	protected bool bLimitedUsers = false;
 	
 	// Primary (first or closest) user ID
-	private Int64 liPrimaryUserId = 0;
+	protected Int64 liPrimaryUserId = 0;
 	
 	// Kinect to world matrix
-	private Matrix4x4 kinectToWorld = Matrix4x4.zero;
+	protected Matrix4x4 kinectToWorld = Matrix4x4.zero;
 	//private Matrix4x4 mOrient = Matrix4x4.zero;
 
 	// Calibration gesture data for each player
-	private Dictionary<Int64, KinectGestures.GestureData> playerCalibrationData = new Dictionary<Int64, KinectGestures.GestureData>();
+	protected Dictionary<Int64, KinectGestures.GestureData> playerCalibrationData = new Dictionary<Int64, KinectGestures.GestureData>();
 	
 	// gestures data and parameters
-	private Dictionary<Int64, List<KinectGestures.GestureData>> playerGesturesData = new Dictionary<Int64, List<KinectGestures.GestureData>>();
-	private Dictionary<Int64, float> gesturesTrackingAtTime = new Dictionary<Int64, float>();
+	protected Dictionary<Int64, List<KinectGestures.GestureData>> playerGesturesData = new Dictionary<Int64, List<KinectGestures.GestureData>>();
+	protected Dictionary<Int64, float> gesturesTrackingAtTime = new Dictionary<Int64, float>();
 	
 	//// List of Gesture Listeners. They must implement KinectGestures.GestureListenerInterface
 	//public List<KinectGestures.GestureListenerInterface> gestureListenerInts;
 	
 	// Body filter instances
-	private JointPositionsFilter jointPositionFilter = null;
-	private BoneOrientationsConstraint boneConstraintsFilter = null;
-	//private BoneOrientationsFilter boneOrientationFilter = null;
+	protected JointPositionsFilter jointPositionFilter = null;
+	protected BoneOrientationsConstraint boneConstraintsFilter = null;
+	//protected BoneOrientationsFilter boneOrientationFilter = null;
+
+	// background kinect thread
+	protected System.Threading.Thread kinectReaderThread = null;
+	protected bool kinectReaderRunning = false;
+
 
 	/// <summary>
 	/// Gets the single KinectManager instance.
@@ -286,6 +309,22 @@ public class KinectManager : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Gets the next joint of the given joint.
+	/// </summary>
+	/// <returns>The next joint.</returns>
+	/// <param name="joint">Joint.</param>
+	public KinectInterop.JointType GetNextJoint(KinectInterop.JointType joint)
+	{
+		if(sensorData != null && sensorData.sensorInterface != null)
+		{
+			return sensorData.sensorInterface.GetNextJoint(joint);
+		}
+		
+		// fall back - return the same joint (i.e. end-joint)
+		return joint;
+	}
+	
+	/// <summary>
 	/// Gets the width of the color image, returned by the sensor.
 	/// </summary>
 	/// <returns>The color image width.</returns>
@@ -395,6 +434,15 @@ public class KinectManager : MonoBehaviour
 	{
 		return alUserIds.Count;
 	}
+
+	/// <summary>
+	/// Gets IDs of all currently tracked users.
+	/// </summary>
+	/// <returns>The list of all currently tracked users.</returns>
+	public List<long> GetAllUserIds()
+	{
+		return new List<long>(alUserIds);
+	}
 	
 	/// <summary>
 	/// Gets the user ID by the specified user index.
@@ -403,9 +451,14 @@ public class KinectManager : MonoBehaviour
 	/// <param name="i">The user index.</param>
 	public Int64 GetUserIdByIndex(int i)
 	{
-		if(i >= 0 && i < alUserIds.Count)
+//		if(i >= 0 && i < alUserIds.Count)
+//		{
+//			return alUserIds[i];
+//		}
+		
+		if(i >= 0 && i < KinectInterop.Constants.MaxBodyCount)
 		{
-			return alUserIds[i];
+			return aUserIndexIds[i];
 		}
 		
 		return 0;
@@ -418,9 +471,17 @@ public class KinectManager : MonoBehaviour
 	/// <param name="userId">User ID</param>
 	public int GetUserIndexById(Int64 userId)
 	{
-		for(int i = 0; i < alUserIds.Count; i++)
+//		for(int i = 0; i < alUserIds.Count; i++)
+//		{
+//			if(alUserIds[i] == userId)
+//			{
+//				return i;
+//			}
+//		}
+		
+		for(int i = 0; i < aUserIndexIds.Length; i++)
 		{
-			if(alUserIds[i] == userId)
+			if(aUserIndexIds[i] == userId)
 			{
 				return i;
 			}
@@ -548,6 +609,32 @@ public class KinectManager : MonoBehaviour
 		}
 		
 		return new KinectInterop.BodyData();
+	}
+
+	/// <summary>
+	/// Gets the kinect to world matrix.
+	/// </summary>
+	/// <returns>The kinect to world matrix.</returns>
+	public Matrix4x4 GetKinectToWorldMatrix()
+	{
+		return kinectToWorld;
+	}
+
+	/// <summary>
+	/// Sets the kinect to world matrix.
+	/// </summary>
+	/// <param name="sensorPos">Sensor position.</param>
+	/// <param name="sensorRot">Sensor rotation.</param>
+	public void SetKinectToWorldMatrix(Vector3 sensorPos, Quaternion sensorRot)
+	{
+		kinectToWorld.SetTRS(sensorPos, sensorRot, Vector3.one);
+
+		sensorHeight = sensorPos.y;
+		sensorAngle = -sensorRot.eulerAngles.x;
+
+		// enable or disable getting height and angle info
+		autoHeightAngle = AutoHeightAngle.DontUse;
+		sensorData.hintHeightAngle = (autoHeightAngle != AutoHeightAngle.DontUse);
 	}
 	
 	/// <summary>
@@ -839,7 +926,8 @@ public class KinectManager : MonoBehaviour
 								float yScaled = (float)posDepth.y * imageRect.height / sensorData.depthImageHeight;
 
 								float xScreen = imageRect.x + xScaled;
-								float yScreen = camera.pixelHeight - (imageRect.y + yScaled);
+								//float yScreen = camera.pixelHeight - (imageRect.y + yScaled);
+								float yScreen = imageRect.y + imageRect.height - yScaled;
 								
 								Plane cameraPlane = new Plane(camera.transform.forward, camera.transform.position);
 								float zDistance = cameraPlane.GetDistanceToPoint(posJointRaw);
@@ -892,14 +980,12 @@ public class KinectManager : MonoBehaviour
 
 							if(!float.IsInfinity(posColor.x) && !float.IsInfinity(posColor.y))
 							{
-//								float xNorm = (float)posColor.x / sensorData.colorImageWidth;
-//								float yNorm = 1.0f - (float)posColor.y / sensorData.colorImageHeight;
-
 								float xScaled = (float)posColor.x * imageRect.width / sensorData.colorImageWidth;
 								float yScaled = (float)posColor.y * imageRect.height / sensorData.colorImageHeight;
 								
 								float xScreen = imageRect.x + xScaled;
-								float yScreen = camera.pixelHeight - (imageRect.y + yScaled);
+								//float yScreen = camera.pixelHeight - (imageRect.y + yScaled);
+								float yScreen = imageRect.y + imageRect.height - yScaled;
 
 								Plane cameraPlane = new Plane(camera.transform.forward, camera.transform.position);
 								float zDistance = cameraPlane.GetDistanceToPoint(posJointRaw);
@@ -917,6 +1003,72 @@ public class KinectManager : MonoBehaviour
 		}
 
 		return Vector3.zero;
+	}
+	
+	/// <summary>
+	/// Gets the joint position on the depth map texture.
+	/// </summary>
+	/// <returns>The joint position in texture coordinates.</returns>
+	/// <param name="userId">User ID</param>
+	/// <param name="joint">Joint index</param>
+	public Vector2 GetJointDepthMapPos(Int64 userId, int joint)
+	{
+		Vector2 posDepth = Vector2.zero;
+
+		Vector3 posJointRaw = GetJointKinectPosition(userId, joint);
+		if(posJointRaw != Vector3.zero)
+		{
+			posDepth = MapSpacePointToDepthCoords(posJointRaw);
+
+			if(posDepth != Vector2.zero)
+			{
+				float xScaled = (float)posDepth.x / GetDepthImageWidth();
+				float yScaled = (float)posDepth.y / GetDepthImageHeight();
+				
+				posDepth = new Vector2(xScaled, 1f - yScaled);
+			}
+		}
+		
+		return posDepth;
+	}
+	
+	/// <summary>
+	/// Gets the joint position on the color map texture.
+	/// </summary>
+	/// <returns>The joint position in texture coordinates.</returns>
+	/// <param name="userId">User ID</param>
+	/// <param name="joint">Joint index</param>
+	public Vector2 GetJointColorMapPos(Int64 userId, int joint)
+	{
+		Vector2 posColor = Vector2.zero;
+
+		Vector3 posJointRaw = GetJointKinectPosition(userId, joint);
+		if(posJointRaw != Vector3.zero)
+		{
+			// 3d position to depth
+			Vector2 posDepth = MapSpacePointToDepthCoords(posJointRaw);
+			ushort depthValue = GetDepthForPixel((int)posDepth.x, (int)posDepth.y);
+			
+			if(posDepth != Vector2.zero && depthValue > 0)
+			{
+				// depth pos to color pos
+				posColor = MapDepthPointToColorCoords(posDepth, depthValue);
+				
+				if(!float.IsInfinity(posColor.x) && !float.IsInfinity(posColor.y))
+				{
+					float xScaled = (float)posColor.x / GetColorImageWidth();
+					float yScaled = (float)posColor.y / GetColorImageHeight();
+					
+					posColor = new Vector2(xScaled, 1f - yScaled);
+				}
+				else
+				{
+					posColor = Vector2.zero;
+				}
+			}
+		}
+		
+		return posColor;
 	}
 	
 	/// <summary>
@@ -1072,7 +1224,9 @@ public class KinectManager : MonoBehaviour
 					
 				if(bodyData.joint[(int)KinectInterop.JointType.SpineBase].trackingState != KinectInterop.TrackingState.NotTracked)
 				{
-					leftBotBack.z = bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z;
+					//leftBotBack.z = bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z;
+					leftBotBack.z = !ignoreZCoordinates ? bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z :
+						(bodyData.joint[(int)KinectInterop.JointType.HandLeft].position.z + 0.1f);
 					rightTopFront.z = leftBotBack.z - 0.5f;
 				}
 				else
@@ -1136,7 +1290,9 @@ public class KinectManager : MonoBehaviour
 					
 				if(bodyData.joint[(int)KinectInterop.JointType.SpineBase].trackingState != KinectInterop.TrackingState.NotTracked)
 				{
-					leftBotBack.z = bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z;
+					//leftBotBack.z = bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z;
+					leftBotBack.z = !ignoreZCoordinates ? bodyData.joint[(int)KinectInterop.JointType.SpineBase].position.z :
+						(bodyData.joint[(int)KinectInterop.JointType.HandRight].position.z + 0.1f);
 					rightTopFront.z = leftBotBack.z - 0.5f;
 				}
 				else
@@ -1171,6 +1327,24 @@ public class KinectManager : MonoBehaviour
 
 		return 0;
 	}
+
+	/// <summary>
+	/// Gets the depth value for the specified pixel, if ComputeUserMap is true.
+	/// </summary>
+	/// <returns>The depth value.</returns>
+	/// <param name="index">Depth index.</param>
+	public ushort GetDepthForIndex(int index)
+	{
+		if(sensorData != null && sensorData.depthImage != null)
+		{
+			if(index >= 0 && index < sensorData.depthImage.Length)
+			{
+				return sensorData.depthImage[index];
+			}
+		}
+		
+		return 0;
+	}
 	
 	/// <summary>
 	/// Returns the space coordinates of a depth-map point, or Vector3.zero if the sensor is not initialized
@@ -1194,6 +1368,28 @@ public class KinectManager : MonoBehaviour
 		}
 		
 		return posKinect;
+	}
+	
+	/// <summary>
+	/// Maps the depth frame to space coordinates.
+	/// </summary>
+	/// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+	/// <param name="avSpaceCoords">Buffer for the depth-to-space coordinates.</param>
+	public bool MapDepthFrameToSpaceCoords(ref Vector3[] avSpaceCoords)
+	{
+		bool bResult = false;
+		
+		if(kinectInitialized && sensorData.depthImage != null)
+		{
+			if(avSpaceCoords == null || avSpaceCoords.Length == 0)
+			{
+				avSpaceCoords = new Vector3[sensorData.depthImageWidth * sensorData.depthImageHeight];
+			}
+			
+			bResult = KinectInterop.MapDepthFrameToSpaceCoords(sensorData, ref avSpaceCoords);
+		}
+		
+		return bResult;
 	}
 	
 	/// <summary>
@@ -1221,7 +1417,7 @@ public class KinectManager : MonoBehaviour
 	/// <param name="depthValue">Depth value</param>
 	public Vector2 MapDepthPointToColorCoords(Vector2 posPoint, ushort depthValue)
 	{
-		Vector2 posColor = Vector3.zero;
+		Vector2 posColor = Vector2.zero;
 		
 		if(kinectInitialized)
 		{
@@ -1230,7 +1426,7 @@ public class KinectManager : MonoBehaviour
 		
 		return posColor;
 	}
-	
+
 	/// <summary>
 	/// Maps the depth frame to color coordinates.
 	/// </summary>
@@ -1273,6 +1469,24 @@ public class KinectManager : MonoBehaviour
 		}
 		
 		return bResult;
+	}
+
+	/// <summary>
+	/// Returns the depth-map coordinates of a color point.
+	/// </summary>
+	/// <returns>The depth coords.</returns>
+	/// <param name="colorPos">Color position.</param>
+	/// <param name="bReadDepthCoordsIfNeeded">If set to <c>true</c> allows reading of depth coords, if needed.</param>
+	public Vector2 MapColorPointToDepthCoords(Vector2 colorPos, bool bReadDepthCoordsIfNeeded)
+	{
+		Vector2 posDepth = Vector2.zero;
+		
+		if(kinectInitialized && sensorData.colorImage != null && sensorData.depthImage != null)
+		{
+			posDepth = KinectInterop.MapColorPointToDepthCoords(sensorData, colorPos, bReadDepthCoordsIfNeeded);
+		}
+		
+		return posDepth;
 	}
 	
 	/// <summary>
@@ -1599,6 +1813,27 @@ public class KinectManager : MonoBehaviour
 
 
 	/// <summary>
+	/// Gets the world matrix data as one csv line.
+	/// </summary>
+	/// <returns>The world matrix data as a csv line.</returns>
+	public string GetWorldMatrixData()
+	{
+		return KinectInterop.GetMatrixAsCsv(ref kinectToWorld);
+	}
+
+
+	/// <summary>
+	/// Gets the body hand as one csv line, or returns empty string if there is no new body frame.
+	/// </summary>
+	/// <returns>The body hand as a csv line.</returns>
+	/// <param name="liRelTime">Reference to variable, used to compare frame times.</param>
+	public string GetBodyHandData(ref long liRelTime)
+	{
+		return KinectInterop.GetHandsDataAsCsv(sensorData, ref bodyFrame, ref liRelTime);
+	}
+
+
+	/// <summary>
 	/// Gets the body frame as one csv line, or returns empty string if there is no new body frame.
 	/// </summary>
 	/// <returns>The body frame as a csv line.</returns>
@@ -1638,6 +1873,37 @@ public class KinectManager : MonoBehaviour
 		}
 	}
 	
+	/// <summary>
+	/// Sets the world matrix data from the given csv line.
+	/// </summary>
+	/// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+	/// <param name="sLine">The kinect2world data as csv line.</param>
+	public bool SetWorldMatrixData(string sLine)
+	{
+		if(sensorData != null && sensorData.isPlayModeEnabled)
+		{
+			return KinectInterop.SetMatrixFromCsv(sLine, ref kinectToWorld);
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Sets the body hand data from the given csv line.
+	/// </summary>
+	/// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+	/// <param name="sLine">The hand data as csv line.</param>
+	public bool SetBodyHandData(string sLine)
+	{
+		if(sensorData != null && sensorData.isPlayModeEnabled)
+		{
+			sensorData.playModeHandData = sLine;
+			return true;
+		}
+
+		return false;
+	}
+
 	/// <summary>
 	/// Sets the body frame from the given csv line.
 	/// </summary>
@@ -1690,6 +1956,9 @@ public class KinectManager : MonoBehaviour
 			}
 			else
 			{
+				// set graphics shader level
+				KinectInterop.SetGraphicsShaderLevel(SystemInfo.graphicsShaderLevel);
+
 				// start the sensor
 				StartKinect();
 			}
@@ -1700,7 +1969,7 @@ public class KinectManager : MonoBehaviour
 			
 			if(calibrationText != null)
 			{
-				calibrationText.GetComponent<GUIText>().text = ex.Message;
+				calibrationText.text = ex.Message;
 			}
 		}
 
@@ -1713,7 +1982,7 @@ public class KinectManager : MonoBehaviour
 			// try to initialize the default Kinect2 sensor
 			KinectInterop.FrameSource dwFlags = KinectInterop.FrameSource.TypeBody;
 
-			if(computeUserMap)
+			if(computeUserMap != UserMapType.None)
 				dwFlags |= KinectInterop.FrameSource.TypeDepth | KinectInterop.FrameSource.TypeBodyIndex;
 			if(computeColorMap)
 				dwFlags |= KinectInterop.FrameSource.TypeColor;
@@ -1723,7 +1992,9 @@ public class KinectManager : MonoBehaviour
 //				dwFlags |= KinectInterop.FrameSource.TypeAudio;
 
 			// open the default sensor
-			sensorData = KinectInterop.OpenDefaultSensor(sensorInterfaces, dwFlags, sensorAngle, useMultiSourceReader);
+			BackgroundRemovalManager brManager = gameObject.GetComponentInChildren<BackgroundRemovalManager>();
+			sensorData = KinectInterop.OpenDefaultSensor(sensorInterfaces, dwFlags, sensorAngle, useMultiSourceReader, computeUserMap, brManager);
+
 			if (sensorData == null)
 			{
 				if(sensorInterfaces == null || sensorInterfaces.Count == 0)
@@ -1748,7 +2019,7 @@ public class KinectManager : MonoBehaviour
 			
 			if(calibrationText != null)
 			{
-				calibrationText.GetComponent<GUIText>().text = message;
+				calibrationText.text = message;
 			}
 			
 			return;
@@ -1762,7 +2033,7 @@ public class KinectManager : MonoBehaviour
 			
 			if(calibrationText != null)
 			{
-				calibrationText.GetComponent<GUIText>().text = message;
+				calibrationText.text = message;
 			}
 			
 			return;
@@ -1772,7 +2043,7 @@ public class KinectManager : MonoBehaviour
 		instance = this;
 		
 		// init skeleton structures
-		bodyFrame = new KinectInterop.BodyFrameData(sensorData.bodyCount, KinectInterop.Constants.JointCount); // sensorData.jointCount
+		bodyFrame = new KinectInterop.BodyFrameData(sensorData.bodyCount, KinectInterop.Constants.MaxJointCount); // sensorData.jointCount
 		bodyFrame.bTurnAnalisys = allowTurnArounds;
 
 		KinectInterop.SmoothParameters smoothParameters = new KinectInterop.SmoothParameters();
@@ -1814,7 +2085,7 @@ public class KinectManager : MonoBehaviour
 			boneConstraintsFilter.SetDebugText(calibrationText);
 		}
 
-		if(computeUserMap)
+		if(computeUserMap != UserMapType.None && computeUserMap != UserMapType.RawUserDepth)
 		{
 			// Initialize depth & label map related stuff
 			usersLblTex = new Texture2D(sensorData.depthImageWidth, sensorData.depthImageHeight, TextureFormat.ARGB32, false);
@@ -1839,13 +2110,28 @@ public class KinectManager : MonoBehaviour
 
 			foreach(MonoBehaviour monoScript in monoScripts)
 			{
-				if(typeof(AvatarController).IsAssignableFrom(monoScript.GetType()) &&
-				   monoScript.enabled)
+				if(typeof(AvatarController).IsAssignableFrom(monoScript.GetType()) && monoScript.enabled)
 				{
 					AvatarController avatar = (AvatarController)monoScript;
 					avatarControllers.Add(avatar);
 				}
 			}
+		}
+
+		// set up the gesture manager, if not already set
+		if(gestureManager == null)
+		{
+			MonoBehaviour[] monoScripts = FindObjectsOfType(typeof(MonoBehaviour)) as MonoBehaviour[];
+			
+			foreach(MonoBehaviour monoScript in monoScripts)
+			{
+				if(typeof(KinectGestures).IsAssignableFrom(monoScript.GetType()) && monoScript.enabled)
+				{
+					gestureManager = (KinectGestures)monoScript;
+					break;
+				}
+			}
+
 		}
 
 		// try to automatically use the available gesture listeners in the scene
@@ -1867,7 +2153,14 @@ public class KinectManager : MonoBehaviour
         // Initialize user list to contain all users.
         //alUserIds = new List<Int64>();
         //dictUserIdToIndex = new Dictionary<Int64, int>();
-	
+
+//		// start the background reader
+//		kinectReaderThread = new System.Threading.Thread(UpdateKinectStreamsThread);
+//		kinectReaderThread.Name = "KinectReaderThread";
+//		kinectReaderThread.IsBackground = true;
+//		kinectReaderThread.Start();
+//		kinectReaderRunning = true;
+
 		kinectInitialized = true;
 
 #if USE_SINGLE_KM_IN_MULTIPLE_SCENES
@@ -1877,7 +2170,7 @@ public class KinectManager : MonoBehaviour
 		// GUI Text.
 		if(calibrationText != null)
 		{
-			calibrationText.GetComponent<GUIText>().text = "WAITING FOR USERS";
+			calibrationText.text = "WAITING FOR USERS";
 		}
 		
 		Debug.Log("Waiting for users.");
@@ -1891,6 +2184,11 @@ public class KinectManager : MonoBehaviour
 		// shut down the Kinect on quitting.
 		if(kinectInitialized)
 		{
+			// stop the background thread
+			kinectReaderRunning = false;
+			kinectReaderThread = null;
+
+			// close the sensor
 			KinectInterop.CloseSensor(sensorData);
 			
 //			KinectInterop.ShutdownKinectSensor();
@@ -1903,7 +2201,8 @@ public class KinectManager : MonoBehaviour
     {
 		if(kinectInitialized)
 		{
-	        if(computeUserMap && displayUserMap)
+			if(displayUserMap && !sensorData.color2DepthTexture &&
+			   (computeUserMap != UserMapType.None && computeUserMap != UserMapType.RawUserDepth))
 	        {
 				if(usersMapRect.width == 0 || usersMapRect.height == 0)
 				{
@@ -1959,78 +2258,159 @@ public class KinectManager : MonoBehaviour
 			}
 		}
     }
-	
-	void Update() 
+
+	// updates Kinect streams and structures
+	private void UpdateKinectStreams()
 	{
 		if(kinectInitialized)
 		{
 			// check user limits and update sensor data
-			bLimitedUsers = maxTrackedUsers < 6 || minUserDistance > 0.5f || maxUserDistance != 0f;
+			bLimitedUsers = showTrackedUsersOnly && 
+				(maxTrackedUsers < 6 || minUserDistance > 0.5f || maxUserDistance != 0f || maxLeftRightDistance != 0f);
 			KinectInterop.UpdateSensorData(sensorData);
-
+			
 			if(useMultiSourceReader)
 			{
 				KinectInterop.GetMultiSourceFrame(sensorData);
 			}
-
+			
 			// poll color map
 			if(computeColorMap)
 			{
-				if(KinectInterop.PollColorFrame(sensorData))
+				if((sensorData.newColorImage = KinectInterop.PollColorFrame(sensorData)))
 				{
-					UpdateColorMap();
+					//UpdateColorMap();
 				}
 			}
 			
 			// poll user map
-			if(computeUserMap)
+			if(computeUserMap != UserMapType.None)
 			{
-				if(KinectInterop.PollDepthFrame(sensorData, bLimitedUsers, dictUserIdToIndex.Values))
+				sensorData.firstUserIndex = liPrimaryUserId != 0 && dictUserIdToIndex.ContainsKey(liPrimaryUserId) ? 
+					dictUserIdToIndex[liPrimaryUserId] : -1;
+				
+				if((sensorData.newDepthImage = KinectInterop.PollDepthFrame(sensorData, computeUserMap, bLimitedUsers, dictUserIdToIndex.Values)))
 				{
-					UpdateUserMap();
+					//UpdateUserMap(computeUserMap);
 				}
 			}
-
+			
 			// poll infrared map
 			if(computeInfraredMap)
 			{
-				if(KinectInterop.PollInfraredFrame(sensorData))
+				if((sensorData.newInfraredImage = KinectInterop.PollInfraredFrame(sensorData)))
 				{
-					UpdateInfraredMap();
+					//UpdateInfraredMap();
 				}
 			}
-
+			
 			// poll or play body frame
-			bool bNewBodyFrame = false;
+			sensorData.newBodyFrame = false;
 			if(sensorData == null || !sensorData.isPlayModeEnabled)
 			{
-				bNewBodyFrame = KinectInterop.PollBodyFrame(sensorData, ref bodyFrame, ref kinectToWorld);
+				sensorData.newBodyFrame = KinectInterop.PollBodyFrame(sensorData, ref bodyFrame, ref kinectToWorld, ignoreZCoordinates);
 			}
 			else
 			{
-				if(sensorData.playModeData.Length != 0)
+				if(!string.IsNullOrEmpty(sensorData.playModeData))
 				{
-					bNewBodyFrame = KinectInterop.SetBodyFrameFromCsv(sensorData.playModeData, sensorData, ref bodyFrame, ref kinectToWorld);
+					sensorData.newBodyFrame = KinectInterop.SetBodyFrameFromCsv(sensorData.playModeData, sensorData, ref bodyFrame, ref kinectToWorld);
 					sensorData.playModeData = string.Empty;
 				}
-			}
 
+				if(!string.IsNullOrEmpty(sensorData.playModeHandData))
+				{
+					KinectInterop.SetHandsDataFromCsv(sensorData.playModeHandData, sensorData, ref bodyFrame);
+					sensorData.playModeHandData = string.Empty;
+				}
+			}
+			
 			// process the body frame
-			if(bNewBodyFrame)
+			if(sensorData.newBodyFrame)
 			{
 				// filter the tracked joint positions
 				if(smoothing != Smoothing.None)
 				{
 					jointPositionFilter.UpdateFilter(ref bodyFrame);
 				}
-
-				ProcessBodyFrameData();
+				
+				//ProcessBodyFrameData();
 			}
-
+			
 			if(useMultiSourceReader)
 			{
 				KinectInterop.FreeMultiSourceFrame(sensorData);
 			}
+		}
+	}
+
+	// background kinect thread procedure
+	private void UpdateKinectStreamsThread()
+	{
+		while(kinectReaderRunning)
+		{
+			UpdateKinectStreams();
+			System.Threading.Thread.Sleep(10);
+		}
+	}
+	
+	// process data from Kinect streams
+	private void ProcessKinectStreams()
+	{
+		// render color texture
+		if(sensorData.colorImageBufferReady)
+		{
+			KinectInterop.RenderColorTexture(sensorData);
+			UpdateColorMap();
+		}
+		
+		// render body-index texture
+		bool newDepthImage = sensorData.bodyIndexBufferReady || sensorData.depthImageBufferReady;
+
+		if(sensorData.bodyIndexBufferReady)
+		{
+			KinectInterop.RenderBodyIndexTexture(sensorData, computeUserMap);
+		}
+
+		// render depth-image texture
+		if(sensorData.depthImageBufferReady)
+		{
+			KinectInterop.RenderDepthImageTexture(sensorData);
+		}
+
+		// update user map
+		if(newDepthImage)
+		{
+			UpdateUserMap(computeUserMap);
+		}
+
+		// update infrared map
+		UpdateInfraredMap();
+
+		if(sensorData.bodyFrameReady)
+		{
+			ProcessBodyFrameData();
+			
+			// frame is released
+			lock(sensorData.bodyFrameLock)
+			{
+				sensorData.bodyFrameReady = false;
+			}
+		}
+	}
+	
+	void Update() 
+	{
+		if(kinectInitialized)
+		{
+			if(!kinectReaderRunning)
+			{
+				// update Kinect streams and structures
+				UpdateKinectStreams();
+			}
+
+			// process the data from Kinect streams
+			ProcessKinectStreams();
 
 			// update the avatars
 			if(!lateUpdateAvatars)
@@ -2165,46 +2545,62 @@ public class KinectManager : MonoBehaviour
 	}
 	
 	// Update the user histogram
-    void UpdateUserMap()
+	void UpdateUserMap(UserMapType userMapType)
     {
-		if(sensorData != null && !sensorData.sensorInterface.IsBackgroundRemovalActive())
+		if(sensorData != null && sensorData.sensorInterface != null && 
+		   !sensorData.sensorInterface.IsBackgroundRemovalActive())
 		{
 			if(!KinectInterop.IsDirectX11Available())
 			{
-				UpdateUserHistogramImage();
-				usersLblTex.SetPixels32(usersHistogramImage);
+				if(userMapType != UserMapType.RawUserDepth)
+				{
+					UpdateUserHistogramImage(userMapType);
+					usersLblTex.SetPixels32(usersHistogramImage);
+				}
 			}
 			else
 			{
-				if(sensorData.depth2ColorTexture)
+				if(userMapType == UserMapType.CutOutTexture)
 				{
-					if(KinectInterop.RenderDepth2ColorTex(sensorData))
+					if(!sensorData.color2DepthTexture && sensorData.depth2ColorTexture && 
+					   KinectInterop.RenderDepth2ColorTex(sensorData))
 					{
 						KinectInterop.RenderTex2Tex2D(sensorData.depth2ColorTexture, ref usersLblTex);
 					}
+					else if(!sensorData.color2DepthTexture)
+					{
+						KinectInterop.RenderTex2Tex2D(sensorData.bodyIndexTexture, ref usersLblTex);
+					}
 				}
-				else if(sensorData.depthImageTexture)
+				else if(userMapType == UserMapType.BodyTexture && sensorData.bodyIndexTexture)
+				{
+					KinectInterop.RenderTex2Tex2D(sensorData.bodyIndexTexture, ref usersLblTex);
+				}
+				else if(userMapType == UserMapType.UserTexture && sensorData.depthImageTexture)
 				{
 					KinectInterop.RenderTex2Tex2D(sensorData.depthImageTexture, ref usersLblTex);
 				}
 			}
 			
-			// draw skeleton lines
-			if(displaySkeletonLines)
+			if(userMapType != UserMapType.RawUserDepth)
 			{
-				for(int i = 0; i < alUserIds.Count; i++)
+				// draw skeleton lines
+				if(displaySkeletonLines)
 				{
-					Int64 liUserId = alUserIds[i];
-					int index = dictUserIdToIndex[liUserId];
-					
-					if(index >= 0 && index < sensorData.bodyCount)
+					for(int i = 0; i < alUserIds.Count; i++)
 					{
-						DrawSkeleton(usersLblTex, ref bodyFrame.bodyData[index]);
+						Int64 liUserId = alUserIds[i];
+						int index = dictUserIdToIndex[liUserId];
+						
+						if(index >= 0 && index < sensorData.bodyCount)
+						{
+							DrawSkeleton(usersLblTex, ref bodyFrame.bodyData[index]);
+						}
 					}
 				}
+				
+				usersLblTex.Apply();
 			}
-			
-			usersLblTex.Apply();
 		}
     }
 
@@ -2215,7 +2611,7 @@ public class KinectManager : MonoBehaviour
 	}
 	
 	// Update the user histogram map
-	void UpdateUserHistogramImage()
+	void UpdateUserHistogramImage(UserMapType userMapType)
 	{
 		int numOfPoints = 0;
 		Array.Clear(usersHistogramMap, 0, usersHistogramMap.Length);
@@ -2248,10 +2644,17 @@ public class KinectManager : MonoBehaviour
 			}
 		}
 
-		List<int> alTrackedIndexes = new List<int>(dictUserIdToIndex.Values);
+		//List<int> alTrackedIndexes = new List<int>(dictUserIdToIndex.Values);
 		byte btSelBI = sensorData.selectedBodyIndex;
 		Color32 clrClear = Color.clear;
 
+		// convert the body indices to string
+		string sTrackedIndices = string.Empty;
+		foreach(int bodyIndex in dictUserIdToIndex.Values)
+		{
+			sTrackedIndices += (char)(0x30 + bodyIndex);
+		}
+		
 		// Create the actual users texture based on label map and depth histogram
 		for (int i = 0; i < usersMapSize; i++)
 		{
@@ -2270,7 +2673,8 @@ public class KinectManager : MonoBehaviour
 				usersPrevState[i] = nowUserPixel;
 
 				bool bUserTracked = btSelBI != 255 ? btSelBI == (byte)userMap : 
-					(bLimitedUsers ? alTrackedIndexes.Contains(userMap): userMap != 255);
+					//(bLimitedUsers ? alTrackedIndexes.Contains(userMap): userMap != 255);
+					(bLimitedUsers ? sTrackedIndices.IndexOf((char)(0x30 + userMap)) >= 0 : userMap != 255);
 
 				if(!bUserTracked)
 				{
@@ -2278,7 +2682,7 @@ public class KinectManager : MonoBehaviour
 				}
 				else
 				{
-					if(sensorData.colorImage != null)
+					if(userMapType == UserMapType.CutOutTexture && sensorData.colorImage != null)
 					{
 						Vector2 vColorPos = Vector2.zero;
 
@@ -2355,7 +2759,7 @@ public class KinectManager : MonoBehaviour
 			float angle = sensorData.sensorRotDetected.eulerAngles.x;
 			angle = angle > 180f ? (angle - 360f) : angle;
 
-			calibrationText.GetComponent<GUIText>().text = string.Format("Sensor Height: {0:F1} m, Angle: {1:F0} deg", sensorData.sensorHgtDetected, -angle);
+			calibrationText.text = string.Format("Sensor Height: {0:F1} m, Angle: {1:F0} deg", sensorData.sensorHgtDetected, -angle);
 		}
 
 		if((autoHeightAngle == AutoHeightAngle.AutoUpdate || autoHeightAngle == AutoHeightAngle.AutoUpdateAndShowInfo) && 
@@ -2382,6 +2786,7 @@ public class KinectManager : MonoBehaviour
 			
 			if(bodyData.bIsTracked != 0 && Mathf.Abs(bodyData.position.z) >= minUserDistance &&
 			   (maxUserDistance <= 0f || Mathf.Abs(bodyData.position.z) <= maxUserDistance) &&
+			   (maxLeftRightDistance <= 0f || Mathf.Abs(bodyData.position.x) <= maxLeftRightDistance) &&
 			   (maxTrackedUsers < 0 || trackedUsers < maxTrackedUsers))
 			{
 				// get the body position
@@ -2417,11 +2822,10 @@ public class KinectManager : MonoBehaviour
 						// add the first or closest userId to the list of new users
 						if(!addedUsers.Contains(userId))
 						{
-							addedUsers.Add(userId);
-							addedIndexes.Add(iClosestUserIndex);
+							addedUsers.Insert(0, userId);
+							addedIndexes.Insert(0, iClosestUserIndex);
 							trackedUsers++;
 						}
-						
 					}
 				}
 				
@@ -2531,6 +2935,7 @@ public class KinectManager : MonoBehaviour
 				
 				lostUsers.Remove(userId);
 				bodyFrame.bodyData[i] = bodyData;
+				dictUserIdToTime[userId] = Time.time;
 			}
 			else
 			{
@@ -2544,7 +2949,11 @@ public class KinectManager : MonoBehaviour
 		{
 			foreach(Int64 userId in lostUsers)
 			{
-				RemoveUser(userId);
+				// prevent user removal upon sporadical tracking failures
+				if((Time.time - dictUserIdToTime[userId]) > waitTimeBeforeRemove)
+				{
+					RemoveUser(userId);
+				}
 			}
 			
 			lostUsers.Clear();
@@ -2774,60 +3183,104 @@ public class KinectManager : MonoBehaviour
 		bodyData.joint[jointR].kinectPos = kinectPosL; // new Vector3(kinectPosL.x, kinectPosR.y, kinectPosR.z);
 		bodyData.joint[jointR].position = positionL; // new Vector3(positionL.x, positionR.y, positionR.z);
 	}
+
+	// Returns empty user slot for the given user Id
+	protected virtual int GetEmptyUserSlot(Int64 userId, int bodyIndex)
+	{
+		int uidIndex = -1;
+
+		for(int i = aUserIndexIds.Length - 1; i >= 0; i--)
+		{
+			if(aUserIndexIds[i] == 0)
+			{
+				uidIndex = i;
+			}
+			else if(uidIndex >= 0)
+			{
+				break;
+			}
+		}
+
+		return uidIndex;
+	}
+	
+//	// Returns empty user slot for the given user Id (sorts user indices left to right)
+//	protected virtual int GetEmptyUserSlot(Int64 userId, int bodyIndex)
+//	{
+//		int uidIndex = -1;
+//		float userX = bodyFrame.bodyData[bodyIndex].position.x;
+//		
+//		for(int i = 0; i < aUserIndexIds.Length; i++)
+//		{
+//			if(aUserIndexIds[i] == 0)
+//			{
+//				// free user slot
+//				uidIndex = i;
+//				break;
+//			}
+//			else
+//			{
+//				Int64 uidUserId = aUserIndexIds[i];
+//				float uidUserX = GetUserPosition(uidUserId).x;
+//
+//				if(userX <= uidUserX)
+//				{
+//					// current user is left to the compared one
+//					for(int u = i; u < (aUserIndexIds.Length - 1); u++)
+//					{
+//						aUserIndexIds[u + 1] = aUserIndexIds[u];
+//					}
+//
+//					uidIndex = i;
+//					break;
+//				}
+//			}
+//		}
+//		
+//		return uidIndex;
+//	}
 	
 	// Adds UserId to the list of users
-    private void CalibrateUser(Int64 userId, int bodyIndex)
+    protected virtual void CalibrateUser(Int64 userId, int bodyIndex)
     {
 		if(!alUserIds.Contains(userId))
 		{
 			if(CheckForCalibrationPose(userId, bodyIndex, playerCalibrationPose))
 			{
-				int uidIndex = alUserIds.Count;
+				//int uidIndex = alUserIds.Count;
+				int uidIndex = GetEmptyUserSlot(userId, bodyIndex);
 
-				// check if to add or insert the new id
-				bool bInsertId = false;
-				for(int i = 0; i < avatarControllers.Count; i++)
+				if(uidIndex >= 0)
 				{
-					AvatarController avatar = avatarControllers[i];
-					
-					if(avatar && avatar.playerId != 0)
-					{
-						for(int u = 0; u < alUserIds.Count; u++)
-						{
-							if(avatar.playerId == alUserIds[u] && avatar.playerIndex > u)
-							{
-								bInsertId = true;
-								uidIndex = 0;
-								break;
-							}
-						}
-
-						if(bInsertId)
-							break;
-					}
+					aUserIndexIds[uidIndex] = userId;
 				}
-
-				Debug.Log("Adding user " + uidIndex + ", ID: " + userId + ", Body: " + bodyIndex);
-				dictUserIdToIndex[userId] = bodyIndex;
-
-				if(!bInsertId)
-					alUserIds.Add(userId);
 				else
-					alUserIds.Insert(uidIndex, userId);
-
-				if(liPrimaryUserId == 0)
 				{
-					liPrimaryUserId = userId;
+					// no empty user-index slot
+					return;
+				}
+				
+				Debug.Log("Adding user " + uidIndex + ", ID: " + userId + ", Body: " + bodyIndex);
+
+				dictUserIdToIndex[userId] = bodyIndex;
+				dictUserIdToTime[userId] = Time.time;
+				alUserIds.Add(userId);
+
+				// set primary user-id, if there is none
+				if(liPrimaryUserId == 0 && aUserIndexIds.Length > 0)
+				{
+					liPrimaryUserId = aUserIndexIds[0];  // userId
 					
 					if(liPrimaryUserId != 0)
 					{
-						if(calibrationText != null && calibrationText.GetComponent<GUIText>().text != "")
+						if(calibrationText != null && calibrationText.text != "")
 						{
-							calibrationText.GetComponent<GUIText>().text = "";
+							calibrationText.text = "";
 						}
 					}
 				}
-				
+
+				// calibrates the respective avatar controllers
 				for(int i = 0; i < avatarControllers.Count; i++)
 				{
 					AvatarController avatar = avatarControllers[i];
@@ -2840,18 +3293,18 @@ public class KinectManager : MonoBehaviour
 					}
 				}
 				
-				// add the gestures to detect, if any
+				// add the gestures to be detected by all users, if any
 				foreach(KinectGestures.Gestures gesture in playerCommonGestures)
 				{
 					DetectGesture(userId, gesture);
 				}
 				
-				// notify the gesture listeners about the new user
+				// notify all gesture listeners for the newly detected user
 				foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
 				{
 					if(listener != null)
 					{
-						listener.UserDetected(userId, 0);
+						listener.UserDetected(userId, uidIndex);
 					}
 				}
 				
@@ -2861,11 +3314,13 @@ public class KinectManager : MonoBehaviour
     }
 	
 	// Remove a lost UserId
-	private void RemoveUser(Int64 userId)
+	protected virtual void RemoveUser(Int64 userId)
 	{
-		int uidIndex = alUserIds.IndexOf(userId);
+		//int uidIndex = alUserIds.IndexOf(userId);
+		int uidIndex = Array.IndexOf(aUserIndexIds, userId);
 		Debug.Log("Removing user " + uidIndex + ", ID: " + userId + ", Body: " + dictUserIdToIndex[userId]);
-		
+
+		// reset the respective avatar controllers
 		for(int i = 0; i < avatarControllers.Count; i++)
 		{
 			AvatarController avatar = avatarControllers[i];
@@ -2878,12 +3333,12 @@ public class KinectManager : MonoBehaviour
 			}
 		}
 
-		// notify the gesture listeners about the user loss
+		// notify all gesture listeners for losing this user
 		foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
 		{
 			if(listener != null)
 			{
-				listener.UserLost(userId, 0);
+				listener.UserLost(userId, uidIndex);
 			}
 		}
 
@@ -2911,15 +3366,22 @@ public class KinectManager : MonoBehaviour
 
 		alCalDataKeys.Clear();
 		
-		// remove from global users list
+		// remove user-id from the global users lists
 		dictUserIdToIndex.Remove(userId);
+		dictUserIdToTime.Remove(userId);
 		alUserIds.Remove(userId);
 
+		if(uidIndex >= 0)
+		{
+			aUserIndexIds[uidIndex] = 0;
+		}
+
+		// if this was the primary user, update the primary user-id
 		if(liPrimaryUserId == userId)
 		{
-			if(alUserIds.Count > 0)
+			if(aUserIndexIds.Length > 0)
 			{
-				liPrimaryUserId = alUserIds[0];
+				liPrimaryUserId = aUserIndexIds[0];
 			}
 			else
 			{
@@ -2936,14 +3398,14 @@ public class KinectManager : MonoBehaviour
 //				avatar.SuccessfulCalibration(alUserIds[avatar.playerIndex]);
 //			}
 //		}
-		
-		if(liPrimaryUserId == 0)
+
+		if(alUserIds.Count == 0)
 		{
 			Debug.Log("Waiting for users.");
 			
 			if(calibrationText != null)
 			{
-				calibrationText.GetComponent<GUIText>().text = "WAITING FOR USERS";
+				calibrationText.text = "WAITING FOR USERS";
 			}
 		}
 	}
@@ -2995,101 +3457,88 @@ public class KinectManager : MonoBehaviour
 					bool bNextJointValid = ignoreInferredJoints ? nextJointData.trackingState == KinectInterop.TrackingState.Tracked : nextJointData.trackingState != KinectInterop.TrackingState.NotTracked;
 
 					Vector3 baseDir = KinectInterop.JointBaseDir[nextJoint];
-					Vector3 jointDir = nextJointData.direction;
+					Vector3 jointDir = nextJointData.direction.normalized;
 					jointDir = new Vector3(jointDir.x, jointDir.y, -jointDir.z).normalized;
-					
+
 					Quaternion jointOrientNormal = jointData.normalRotation;
 					if(bNextJointValid)
 					{
 						jointOrientNormal = Quaternion.FromToRotation(baseDir, jointDir);
 					}
-						
-					if((joint == (int)KinectInterop.JointType.ShoulderLeft) ||
-					   (joint == (int)KinectInterop.JointType.ShoulderRight))
+
+					if ((joint == (int)KinectInterop.JointType.ShoulderLeft) ||
+						(joint == (int)KinectInterop.JointType.ShoulderRight)) 
 					{
 						float angle = -bodyData.bodyTurnAngle;
 						Vector3 axis = jointDir;
-						Quaternion armTurnRotation = Quaternion.AngleAxis(angle, axis);
-						
+						Quaternion armTurnRotation = Quaternion.AngleAxis (angle, axis);
+
 						jointData.normalRotation = armTurnRotation * jointOrientNormal;
-					}
-					else if((joint == (int)KinectInterop.JointType.ElbowLeft) ||
-					        (joint == (int)KinectInterop.JointType.WristLeft) || 
-					        (joint == (int)KinectInterop.JointType.HandLeft))
+					} 
+					else if ((joint == (int)KinectInterop.JointType.ElbowLeft) ||
+						(joint == (int)KinectInterop.JointType.WristLeft) ||
+						(joint == (int)KinectInterop.JointType.HandLeft)) 
 					{
-//						if(joint == (int)KinectInterop.JointType.WristLeft)
-//						{
-//							KinectInterop.JointData handData = bodyData.joint[(int)KinectInterop.JointType.HandLeft];
-//							KinectInterop.JointData handTipData = bodyData.joint[(int)KinectInterop.JointType.HandTipLeft];
-//							
-//							if(handData.trackingState != KinectInterop.TrackingState.NotTracked &&
-//							   handTipData.trackingState != KinectInterop.TrackingState.NotTracked)
-//							{
-//								jointDir = handData.direction + handTipData.direction;
-//								jointDir = new Vector3(jointDir.x, jointDir.y, -jointDir.z).normalized;
-//							}
-//						}
-						
-						KinectInterop.JointData shCenterData = bodyData.joint[(int)KinectInterop.JointType.SpineShoulder];
-						if(shCenterData.trackingState != KinectInterop.TrackingState.NotTracked &&
-						   jointDir != Vector3.zero && shCenterData.direction != Vector3.zero &&
-						   Mathf.Abs(Vector3.Dot(jointDir, shCenterData.direction.normalized)) < 0.5f)
+						KinectInterop.JointData shCenterData = bodyData.joint [(int)KinectInterop.JointType.SpineShoulder];
+						if (shCenterData.trackingState != KinectInterop.TrackingState.NotTracked &&
+							jointDir != Vector3.zero && shCenterData.direction != Vector3.zero &&
+							Mathf.Abs (Vector3.Dot (-jointDir, shCenterData.direction.normalized)) < 0.5f) 
 						{
 							Vector3 spineDir = shCenterData.direction;
-							spineDir = new Vector3(spineDir.x, spineDir.y, -spineDir.z).normalized;
-							
-							Vector3 fwdDir = Vector3.Cross(-jointDir, spineDir).normalized;
-							Vector3 upDir = Vector3.Cross(fwdDir, -jointDir).normalized;
-							jointOrientNormal = Quaternion.LookRotation(fwdDir, upDir);
-						}
-						else
-						{
-							jointOrientNormal = Quaternion.FromToRotation(baseDir, jointDir);
-						}
-						
-						bool bRotated = (allowedHandRotations == AllowedRotations.None) &&
-										(joint != (int)KinectInterop.JointType.ElbowLeft);  // false;
-						if((allowedHandRotations == AllowedRotations.All) && 
-						   (sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.KinectSDKv2) 
-						   /**&& (joint != (int)KinectInterop.JointType.ElbowLeft)*/)
-						{
-//							KinectInterop.JointData handData = bodyData.joint[(int)KinectInterop.JointType.HandLeft];
-//							KinectInterop.JointData handTipData = bodyData.joint[(int)KinectInterop.JointType.HandTipLeft];
-							KinectInterop.JointData thumbData = bodyData.joint[(int)KinectInterop.JointType.ThumbLeft];
+							spineDir = new Vector3 (spineDir.x, spineDir.y, -spineDir.z).normalized;
 
-//							if(handData.trackingState != KinectInterop.TrackingState.NotTracked &&
-//							   handTipData.trackingState != KinectInterop.TrackingState.NotTracked &&
-							if(thumbData.trackingState != KinectInterop.TrackingState.NotTracked)
+							Vector3 fwdDir = Vector3.Cross (-jointDir, spineDir).normalized;
+							Vector3 upDir = Vector3.Cross (fwdDir, -jointDir).normalized;
+							jointOrientNormal = Quaternion.LookRotation (fwdDir, upDir);
+						}
+
+						if (joint == (int)KinectInterop.JointType.WristLeft) 
+						{
+							Vector3 parBaseDir = KinectInterop.JointBaseDir [joint];  // limit wrist swing
+							Vector3 parJointDir = jointData.direction;
+							parJointDir.z = -parJointDir.z;
+
+							Quaternion parNormalRot = Quaternion.FromToRotation (parBaseDir, parJointDir);
+							jointOrientNormal = Quaternion.RotateTowards (parNormalRot, jointOrientNormal, 80f);
+						}
+
+						bool bRotated = (allowedHandRotations == AllowedRotations.None) &&
+										(joint != (int)KinectInterop.JointType.ElbowLeft);
+						if ((allowedHandRotations == AllowedRotations.All || (joint == (int)KinectInterop.JointType.HandLeft && !bRotated)) &&
+							(sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.KinectSDKv2 ||
+							sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.DummyK2))
+						{						   
+							KinectInterop.JointData thumbData = bodyData.joint [(int)KinectInterop.JointType.ThumbLeft];
+
+							int prevJoint = (int)sensorData.sensorInterface.GetParentJoint ((KinectInterop.JointType)joint);
+							KinectInterop.JointData prevJointData = bodyData.joint [prevJoint];
+
+							if (thumbData.trackingState != KinectInterop.TrackingState.NotTracked) 
 							{
 								Vector3 rightDir = -nextJointData.direction; // -(handData.direction + handTipData.direction);
-								rightDir = new Vector3(rightDir.x, rightDir.y, -rightDir.z).normalized;
+								rightDir = new Vector3 (rightDir.x, rightDir.y, -rightDir.z).normalized;
 
 								Vector3 fwdDir = thumbData.direction;
-								fwdDir = new Vector3(fwdDir.x, fwdDir.y, -fwdDir.z).normalized;
+								fwdDir = new Vector3 (fwdDir.x, fwdDir.y, -fwdDir.z).normalized;
 
-								if(rightDir != Vector3.zero && fwdDir != Vector3.zero)
+								if (joint == (int)KinectInterop.JointType.HandLeft) 
 								{
-									Vector3 upDir = Vector3.Cross(fwdDir, rightDir).normalized;
-									fwdDir = Vector3.Cross(rightDir, upDir).normalized;
-									
-									jointData.normalRotation = Quaternion.LookRotation(fwdDir, upDir);
-									//bRotated = true;
+									Vector3 prevBaseDir = -KinectInterop.JointBaseDir[prevJoint];
+									Vector3 prevOrthoDir = new Vector3 (prevBaseDir.y, prevBaseDir.z, prevBaseDir.x);
+									fwdDir = prevJointData.normalRotation * prevOrthoDir;
+									rightDir -= Vector3.Project(rightDir, fwdDir);
+								}
 
-//									// fix invalid wrist rotation
-//									KinectInterop.JointData elbowData = bodyData.joint[(int)KinectInterop.JointType.ElbowLeft];
-//									if(elbowData.trackingState != KinectInterop.TrackingState.NotTracked)
-//									{
-//										Quaternion quatLocalRot = Quaternion.Inverse(elbowData.normalRotation) * jointData.normalRotation;
-//										float angleY = quatLocalRot.eulerAngles.y;
-//										
-//										if(angleY >= 90f && angleY < 270f && bodyData.leftHandOrientation != Quaternion.identity)
-//										{
-//											jointData.normalRotation = bodyData.leftHandOrientation;
-//										}
-//										
-//										bodyData.leftHandOrientation = jointData.normalRotation;
-//									}
+								if (rightDir != Vector3.zero && fwdDir != Vector3.zero) 
+								{
+									Vector3 upDir = Vector3.Cross (fwdDir, rightDir).normalized;
+									fwdDir = Vector3.Cross (rightDir, upDir).normalized;
 
+									//jointData.normalRotation = Quaternion.LookRotation(fwdDir, upDir);
+									Quaternion jointOrientThumb = Quaternion.LookRotation (fwdDir, upDir);
+									jointOrientNormal = (joint == (int)KinectInterop.JointType.WristLeft) ?
+										Quaternion.RotateTowards (prevJointData.normalRotation, jointOrientThumb, 80f) : jointOrientThumb;
+									jointData.normalRotation = jointOrientNormal;
 									//bRotated = true;
 								}
 							}
@@ -3097,93 +3546,81 @@ public class KinectManager : MonoBehaviour
 							bRotated = true;
 						}
 
-						if(!bRotated)
+						if (!bRotated) 
 						{
-							float angle = -bodyData.bodyTurnAngle;
-							Vector3 axis = jointDir;
-							Quaternion armTurnRotation = Quaternion.AngleAxis(angle, axis);
+//							float angle = -bodyData.bodyTurnAngle;
+//							Vector3 axis = jointDir;
+//							Quaternion armTurnRotation = Quaternion.AngleAxis(angle, axis);
+							Quaternion armTurnRotation = Quaternion.identity;
 
 							jointData.normalRotation = //(allowedHandRotations != AllowedRotations.None || joint == (int)KinectInterop.JointType.ElbowLeft) ? 
 								armTurnRotation * jointOrientNormal; // : armTurnRotation;
 						}
-					}
-					else if((joint == (int)KinectInterop.JointType.ElbowRight) ||
-					        (joint == (int)KinectInterop.JointType.WristRight) || 
-					        (joint == (int)KinectInterop.JointType.HandRight))
+					} 
+					else if ((joint == (int)KinectInterop.JointType.ElbowRight) ||
+						(joint == (int)KinectInterop.JointType.WristRight) ||
+						(joint == (int)KinectInterop.JointType.HandRight)) 
 					{
-//						if(joint == (int)KinectInterop.JointType.WristRight)
-//						{
-//							KinectInterop.JointData handData = bodyData.joint[(int)KinectInterop.JointType.HandRight];
-//							KinectInterop.JointData handTipData = bodyData.joint[(int)KinectInterop.JointType.HandTipRight];
-//
-//							if(handData.trackingState != KinectInterop.TrackingState.NotTracked &&
-//							   handTipData.trackingState != KinectInterop.TrackingState.NotTracked)
-//							{
-//								jointDir = handData.direction + handTipData.direction;
-//								jointDir = new Vector3(jointDir.x, jointDir.y, -jointDir.z).normalized;
-//							}
-//						}
-
-						KinectInterop.JointData shCenterData = bodyData.joint[(int)KinectInterop.JointType.SpineShoulder];
-						if(shCenterData.trackingState != KinectInterop.TrackingState.NotTracked &&
-						   jointDir != Vector3.zero && shCenterData.direction != Vector3.zero &&
-						   Mathf.Abs(Vector3.Dot(jointDir, shCenterData.direction.normalized)) < 0.5f)
+						KinectInterop.JointData shCenterData = bodyData.joint [(int)KinectInterop.JointType.SpineShoulder];
+						if (shCenterData.trackingState != KinectInterop.TrackingState.NotTracked &&
+							jointDir != Vector3.zero && shCenterData.direction != Vector3.zero &&
+							Mathf.Abs (Vector3.Dot (jointDir, shCenterData.direction.normalized)) < 0.5f) 
 						{
 							Vector3 spineDir = shCenterData.direction;
-							spineDir = new Vector3(spineDir.x, spineDir.y, -spineDir.z).normalized;
-							
-							Vector3 fwdDir = Vector3.Cross(jointDir, spineDir).normalized;
-							Vector3 upDir = Vector3.Cross(fwdDir, jointDir).normalized;
-							jointOrientNormal = Quaternion.LookRotation(fwdDir, upDir);
+							spineDir = new Vector3 (spineDir.x, spineDir.y, -spineDir.z).normalized;
+
+							Vector3 fwdDir = Vector3.Cross (jointDir, spineDir).normalized;
+							Vector3 upDir = Vector3.Cross (fwdDir, jointDir).normalized;
+							jointOrientNormal = Quaternion.LookRotation (fwdDir, upDir);
 						}
-						else
+
+						if (joint == (int)KinectInterop.JointType.WristRight) 
 						{
-							jointOrientNormal = Quaternion.FromToRotation(baseDir, jointDir);
+							Vector3 parBaseDir = KinectInterop.JointBaseDir [joint];
+							Vector3 parJointDir = jointData.direction;
+							parJointDir.z = -parJointDir.z;
+
+							Quaternion parNormalRot = Quaternion.FromToRotation (parBaseDir, parJointDir);
+							jointOrientNormal = Quaternion.RotateTowards (parNormalRot, jointOrientNormal, 80f);
 						}
 
 						bool bRotated = (allowedHandRotations == AllowedRotations.None) &&
-										(joint != (int)KinectInterop.JointType.ElbowRight);  // false;
-						if((allowedHandRotations == AllowedRotations.All) &&
-						   (sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.KinectSDKv2) 
-						   /**&& (joint != (int)KinectInterop.JointType.ElbowRight)*/)
+										(joint != (int)KinectInterop.JointType.ElbowRight);
+						if ((allowedHandRotations == AllowedRotations.All || (joint == (int)KinectInterop.JointType.HandRight && !bRotated)) &&
+							(sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.KinectSDKv2 ||
+							 sensorData.sensorIntPlatform == KinectInterop.DepthSensorPlatform.DummyK2))
 						{
-//							KinectInterop.JointData handData = bodyData.joint[(int)KinectInterop.JointType.HandRight];
-//							KinectInterop.JointData handTipData = bodyData.joint[(int)KinectInterop.JointType.HandTipRight];
-							KinectInterop.JointData thumbData = bodyData.joint[(int)KinectInterop.JointType.ThumbRight];
+							KinectInterop.JointData thumbData = bodyData.joint [(int)KinectInterop.JointType.ThumbRight];
 
-//							if(handData.trackingState != KinectInterop.TrackingState.NotTracked &&
-//							   handTipData.trackingState != KinectInterop.TrackingState.NotTracked &&
-							if(thumbData.trackingState != KinectInterop.TrackingState.NotTracked)
+							int prevJoint = (int)sensorData.sensorInterface.GetParentJoint ((KinectInterop.JointType)joint);
+							KinectInterop.JointData prevJointData = bodyData.joint [prevJoint];
+
+							if (thumbData.trackingState != KinectInterop.TrackingState.NotTracked) 
 							{
 								Vector3 rightDir = nextJointData.direction; // handData.direction + handTipData.direction;
-								rightDir = new Vector3(rightDir.x, rightDir.y, -rightDir.z).normalized;
+								rightDir = new Vector3 (rightDir.x, rightDir.y, -rightDir.z).normalized;
 
 								Vector3 fwdDir = thumbData.direction;
-								fwdDir = new Vector3(fwdDir.x, fwdDir.y, -fwdDir.z).normalized;
+								fwdDir = new Vector3 (fwdDir.x, fwdDir.y, -fwdDir.z).normalized;
 
-								if(rightDir != Vector3.zero && fwdDir != Vector3.zero)
+								if (joint == (int)KinectInterop.JointType.HandRight) 
 								{
-									Vector3 upDir = Vector3.Cross(fwdDir, rightDir).normalized;
-									fwdDir = Vector3.Cross(rightDir, upDir).normalized;
-									
-									jointData.normalRotation = Quaternion.LookRotation(fwdDir, upDir);
-									//bRotated = true;
-									
-//									// fix invalid wrist rotation
-//									KinectInterop.JointData elbowData = bodyData.joint[(int)KinectInterop.JointType.ElbowRight];
-//									if(elbowData.trackingState != KinectInterop.TrackingState.NotTracked)
-//									{
-//										Quaternion quatLocalRot = Quaternion.Inverse(elbowData.normalRotation) * jointData.normalRotation;
-//										float angleY = quatLocalRot.eulerAngles.y;
-//										
-//										if(angleY >= 90f && angleY < 270f && bodyData.rightHandOrientation != Quaternion.identity)
-//										{
-//											jointData.normalRotation = bodyData.rightHandOrientation;
-//										}
-//										
-//										bodyData.rightHandOrientation = jointData.normalRotation;
-//									}
+									Vector3 prevBaseDir = KinectInterop.JointBaseDir[prevJoint];
+									Vector3 prevOrthoDir = new Vector3 (prevBaseDir.y, prevBaseDir.z, prevBaseDir.x);
+									fwdDir = prevJointData.normalRotation * prevOrthoDir;
+									rightDir -= Vector3.Project(rightDir, fwdDir);
+								}
 
+								if (rightDir != Vector3.zero && fwdDir != Vector3.zero) 
+								{
+									Vector3 upDir = Vector3.Cross (fwdDir, rightDir).normalized;
+									fwdDir = Vector3.Cross (rightDir, upDir).normalized;
+
+									//jointData.normalRotation = Quaternion.LookRotation(fwdDir, upDir);
+									Quaternion jointOrientThumb = Quaternion.LookRotation (fwdDir, upDir);
+									jointOrientNormal = (joint == (int)KinectInterop.JointType.WristRight) ?
+										Quaternion.RotateTowards (prevJointData.normalRotation, jointOrientThumb, 80f) : jointOrientThumb;
+									jointData.normalRotation = jointOrientNormal;
 									//bRotated = true;
 								}
 							}
@@ -3191,54 +3628,55 @@ public class KinectManager : MonoBehaviour
 							bRotated = true;
 						}
 
-						if(!bRotated)
+						if (!bRotated) 
 						{
-							float angle = -bodyData.bodyTurnAngle;
-							Vector3 axis = jointDir;
-							Quaternion armTurnRotation = Quaternion.AngleAxis(angle, axis);
+//							float angle = -bodyData.bodyTurnAngle;
+//							Vector3 axis = jointDir;
+//							Quaternion armTurnRotation = Quaternion.AngleAxis(angle, axis);
+							Quaternion armTurnRotation = Quaternion.identity;
 
 							jointData.normalRotation = //(allowedHandRotations != AllowedRotations.None || joint == (int)KinectInterop.JointType.ElbowRight) ? 
 								armTurnRotation * jointOrientNormal; // : armTurnRotation;
 						}
-					}
+					} 
 					else
 					{
 						jointData.normalRotation = jointOrientNormal;
 					}
-					
+
 					if((joint == (int)KinectInterop.JointType.SpineMid) || 
-					   (joint == (int)KinectInterop.JointType.SpineShoulder) || 
-					   (joint == (int)KinectInterop.JointType.Neck))
+						(joint == (int)KinectInterop.JointType.SpineShoulder) || 
+						(joint == (int)KinectInterop.JointType.Neck))
 					{
 						Vector3 baseDir2 = Vector3.right;
 						Vector3 jointDir2 = Vector3.Lerp(bodyData.shouldersDirection, -bodyData.shouldersDirection, bodyData.turnAroundFactor);
 						jointDir2.z = -jointDir2.z;
-						
+
 						jointData.normalRotation *= Quaternion.FromToRotation(baseDir2, jointDir2);
 					}
 					else if((joint == (int)KinectInterop.JointType.SpineBase) ||
-					   (joint == (int)KinectInterop.JointType.HipLeft) || (joint == (int)KinectInterop.JointType.HipRight) ||
-					   (joint == (int)KinectInterop.JointType.KneeLeft) || (joint == (int)KinectInterop.JointType.KneeRight) ||
-					   (joint == (int)KinectInterop.JointType.AnkleLeft) || (joint == (int)KinectInterop.JointType.AnkleRight))
+						(joint == (int)KinectInterop.JointType.HipLeft) || (joint == (int)KinectInterop.JointType.HipRight) ||
+						(joint == (int)KinectInterop.JointType.KneeLeft) || (joint == (int)KinectInterop.JointType.KneeRight) ||
+						(joint == (int)KinectInterop.JointType.AnkleLeft) || (joint == (int)KinectInterop.JointType.AnkleRight))
 					{
 						Vector3 baseDir2 = Vector3.right;
 						Vector3 jointDir2 = Vector3.Lerp(bodyData.hipsDirection, -bodyData.hipsDirection, bodyData.turnAroundFactor);
 						jointDir2.z = -jointDir2.z;
-						
+
 						jointData.normalRotation *= Quaternion.FromToRotation(baseDir2, jointDir2);
 					}
-					
+
 					if(joint == (int)KinectInterop.JointType.Neck && 
-					   sensorData != null && sensorData.sensorInterface != null)
+						sensorData != null && sensorData.sensorInterface != null)
 					{
 						if(sensorData.sensorInterface.IsFaceTrackingActive() && 
-						   sensorData.sensorInterface.IsFaceTracked(bodyData.liTrackingID))
+							sensorData.sensorInterface.IsFaceTracked(bodyData.liTrackingID))
 						{
 							KinectInterop.JointData neckData = bodyData.joint[(int)KinectInterop.JointType.Neck];
 							KinectInterop.JointData headData = bodyData.joint[(int)KinectInterop.JointType.Head];
 
 							if(neckData.trackingState == KinectInterop.TrackingState.Tracked &&
-							   headData.trackingState == KinectInterop.TrackingState.Tracked)
+								headData.trackingState == KinectInterop.TrackingState.Tracked)
 							{
 								Quaternion headRotation = Quaternion.identity;
 								if(sensorData.sensorInterface.GetHeadRotation(bodyData.liTrackingID, ref headRotation))
@@ -3246,31 +3684,51 @@ public class KinectManager : MonoBehaviour
 									Vector3 rotAngles = headRotation.eulerAngles;
 									rotAngles.x = -rotAngles.x;
 									rotAngles.y = -rotAngles.y;
-									
+
 									bodyData.headOrientation = bodyData.headOrientation != Quaternion.identity ?
 										Quaternion.Slerp(bodyData.headOrientation, Quaternion.Euler(rotAngles), 5f * Time.deltaTime) :
-											Quaternion.Euler(rotAngles);
-									
+										Quaternion.Euler(rotAngles);
+
 									jointData.normalRotation = bodyData.headOrientation;
 								}
 							}
 						}
 					}
-					
+
 					Vector3 mirroredAngles = jointData.normalRotation.eulerAngles;
 					mirroredAngles.y = -mirroredAngles.y;
 					mirroredAngles.z = -mirroredAngles.z;
-					
+
 					jointData.mirroredRotation = Quaternion.Euler(mirroredAngles);
 				}
 				else
 				{
 					// get the orientation of the parent joint
 					int prevJoint = (int)sensorData.sensorInterface.GetParentJoint((KinectInterop.JointType)joint);
-					if(prevJoint != joint && prevJoint >= 0 && prevJoint < sensorData.jointCount)
+					if(prevJoint != joint && prevJoint >= 0 && prevJoint < sensorData.jointCount &&
+						joint != (int)KinectInterop.JointType.ThumbLeft && joint != (int)KinectInterop.JointType.ThumbRight)
 					{
-						jointData.normalRotation = bodyData.joint[prevJoint].normalRotation;
-						jointData.mirroredRotation = bodyData.joint[prevJoint].mirroredRotation;
+//						if((allowedHandRotations == AllowedRotations.All) && 
+//						   (joint == (int)KinectInterop.JointType.ThumbLeft ||
+//						    joint == (int)KinectInterop.JointType.ThumbRight))
+//						{
+//							Vector3 jointDir = jointData.direction;
+//							jointDir = new Vector3(jointDir.x, jointDir.y, -jointDir.z).normalized;
+//
+//							Vector3 baseDir = KinectInterop.JointBaseDir[joint];
+//							jointData.normalRotation = Quaternion.FromToRotation(baseDir, jointDir);
+//
+//							Vector3 mirroredAngles = jointData.normalRotation.eulerAngles;
+//							mirroredAngles.y = -mirroredAngles.y;
+//							mirroredAngles.z = -mirroredAngles.z;
+//							
+//							jointData.mirroredRotation = Quaternion.Euler(mirroredAngles);
+//						}
+//						else
+						{
+							jointData.normalRotation = bodyData.joint[prevJoint].normalRotation;
+							jointData.mirroredRotation = bodyData.joint[prevJoint].mirroredRotation;
+						}
 					}
 					else
 					{
@@ -3281,7 +3739,7 @@ public class KinectManager : MonoBehaviour
 			}
 
 			bodyData.joint[joint] = jointData;
-			
+
 			if(joint == (int)KinectInterop.JointType.SpineBase)
 			{
 				bodyData.normalRotation = jointData.normalRotation;
@@ -3293,7 +3751,7 @@ public class KinectManager : MonoBehaviour
 	// Estimates the current state of the defined gestures
 	private void CheckForGestures(Int64 UserId)
 	{
-		if(!playerGesturesData.ContainsKey(UserId) || !gesturesTrackingAtTime.ContainsKey(UserId))
+		if(!gestureManager || !playerGesturesData.ContainsKey(UserId) || !gesturesTrackingAtTime.ContainsKey(UserId))
 			return;
 		
 		// check for gestures
@@ -3304,7 +3762,7 @@ public class KinectManager : MonoBehaviour
 			bool[] playerJointsTracked = new bool[iAllJointsCount];
 			Vector3[] playerJointsPos = new Vector3[iAllJointsCount];
 			
-			int[] aiNeededJointIndexes = KinectGestures.GetNeededJointIndexes(instance);
+			int[] aiNeededJointIndexes = gestureManager.GetNeededJointIndexes(instance);
 			int iNeededJointsCount = aiNeededJointIndexes.Length;
 			
 			for(int i = 0; i < iNeededJointsCount; i++)
@@ -3332,7 +3790,7 @@ public class KinectManager : MonoBehaviour
 				if((timestampNow >= gestureData.startTrackingAtTime) && 
 					!IsConflictingGestureInProgress(gestureData, ref gesturesData))
 				{
-					KinectGestures.CheckForGesture(UserId, ref gestureData, Time.realtimeSinceStartup, 
+					gestureManager.CheckForGesture(UserId, ref gestureData, Time.realtimeSinceStartup, 
 						ref playerJointsPos, ref playerJointsTracked);
 					gesturesData[g] = gestureData;
 
@@ -3399,10 +3857,12 @@ public class KinectManager : MonoBehaviour
 	}
 	
 	// check if the calibration pose is complete for given user
-	private bool CheckForCalibrationPose(Int64 UserId, int bodyIndex, KinectGestures.Gestures calibrationGesture)
+	protected virtual bool CheckForCalibrationPose(Int64 UserId, int bodyIndex, KinectGestures.Gestures calibrationGesture)
 	{
 		if(calibrationGesture == KinectGestures.Gestures.None)
 			return true;
+		if(!gestureManager)
+			return false;
 
 		KinectGestures.GestureData gestureData = playerCalibrationData.ContainsKey(UserId) ? 
 			playerCalibrationData[UserId] : new KinectGestures.GestureData();
@@ -3425,7 +3885,7 @@ public class KinectManager : MonoBehaviour
 		bool[] playerJointsTracked = new bool[iAllJointsCount];
 		Vector3[] playerJointsPos = new Vector3[iAllJointsCount];
 		
-		int[] aiNeededJointIndexes = KinectGestures.GetNeededJointIndexes(instance);
+		int[] aiNeededJointIndexes = gestureManager.GetNeededJointIndexes(instance);
 		int iNeededJointsCount = aiNeededJointIndexes.Length;
 		
 		for(int i = 0; i < iNeededJointsCount; i++)
@@ -3442,7 +3902,7 @@ public class KinectManager : MonoBehaviour
 		}
 		
 		// estimate the gesture progess
-		KinectGestures.CheckForGesture(UserId, ref gestureData, Time.realtimeSinceStartup, 
+		gestureManager.CheckForGesture(UserId, ref gestureData, Time.realtimeSinceStartup, 
 			ref playerJointsPos, ref playerJointsTracked);
 		playerCalibrationData[UserId] = gestureData;
 

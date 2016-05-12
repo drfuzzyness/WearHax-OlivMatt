@@ -6,6 +6,10 @@ public class SimpleBackgroundRemoval : MonoBehaviour
 	[Tooltip("Whether to display the foreground texture on the screen or not.")]
 	public bool displayForeground = true;
 
+	[Tooltip("Please follow these instructions to make this component work.")]
+	[Multiline]
+	public string instructions = "Set 'Compute user map'-setting of KinectManager-component to 'Cut-Out Texture'.";
+
 
 	// the foreground texture
 	private Texture2D foregroundTex;

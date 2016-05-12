@@ -18,9 +18,12 @@ public class BackgroundRemovalManager : MonoBehaviour
 
 	[Tooltip("Whether the hi-res (color camera resolution) is preferred for the foreground image. Otherwise the depth camera resolution will be used.")]
 	public bool colorCameraResolution = true;
-	
+
+	[Tooltip("Whether only the body alpha texture is needed.")]
+	public bool computeBodyTexOnly = false;
+
 	[Tooltip("Color used to paint pixels, where the foreground color data is not available.")]
-	public Color32 defaultColor = new Color32(64, 64, 64, 255);
+	private Color32 defaultColor = new Color32(64, 64, 64, 255);
 	
 	[Tooltip("GUI-Text to display the BR-Manager debug messages.")]
 	public GUIText debugText;
@@ -77,16 +80,42 @@ public class BackgroundRemovalManager : MonoBehaviour
 	/// <returns>The foreground image texture.</returns>
 	public Texture GetForegroundTex()
 	{ 
-		if(sensorData != null && sensorData.color2DepthTexture)
+		bool bHiResSupported = sensorData != null && sensorData.sensorInterface != null ?
+			sensorData.sensorInterface.IsBRHiResSupported() : false;
+		bool bKinect1Int = sensorData != null && sensorData.sensorInterface != null ?
+			(sensorData.sensorInterface.GetSensorPlatform() == KinectInterop.DepthSensorPlatform.KinectSDKv1) : false;
+
+		if(computeBodyTexOnly && sensorData != null && sensorData.alphaBodyTexture)
+		{
+			return sensorData.alphaBodyTexture;
+		}
+		else if(sensorData != null && bHiResSupported && !bKinect1Int && sensorData.color2DepthTexture)
 		{
 			return sensorData.color2DepthTexture;
 		}
-		else if(sensorData != null && sensorData.depth2ColorTexture)
+		else if(sensorData != null && !bKinect1Int && sensorData.depth2ColorTexture)
 		{
 			return sensorData.depth2ColorTexture;
 		}
-
+		
 		return foregroundTex;
+	}
+
+	/// <summary>
+	/// Gets the alpha body texture.
+	/// </summary>
+	/// <returns>The alpha body texture.</returns>
+	public Texture GetAlphaBodyTex()
+	{
+		if(sensorData != null)
+		{
+			if(sensorData.alphaBodyTexture != null)
+				return sensorData.alphaBodyTexture;
+			else
+				return sensorData.bodyIndexTexture;
+		}
+
+		return null;
 	}
 	
 	//----------------------------------- end of public functions --------------------------------------//
@@ -222,7 +251,7 @@ public class BackgroundRemovalManager : MonoBehaviour
 			}
 
 			// update the background removal
-			bool bSuccess = sensorData.sensorInterface.UpdateBackgroundRemoval(sensorData, colorCameraResolution, defaultColor);
+			bool bSuccess = sensorData.sensorInterface.UpdateBackgroundRemoval(sensorData, colorCameraResolution, defaultColor, computeBodyTexOnly);
 			
 			if(bSuccess)
 			{
@@ -232,7 +261,7 @@ public class BackgroundRemovalManager : MonoBehaviour
 					bool bLimitedUsers = kinectManager.IsTrackedUsersLimited();
 					List<int> alTrackedIndexes = kinectManager.GetTrackedBodyIndices();
 					bSuccess = sensorData.sensorInterface.PollForegroundFrame(sensorData, colorCameraResolution, defaultColor, bLimitedUsers, alTrackedIndexes, ref foregroundImage);
-					
+
 					if(bSuccess)
 					{
 						foregroundTex.LoadRawTextureData(foregroundImage);
@@ -263,16 +292,23 @@ public class BackgroundRemovalManager : MonoBehaviour
 			bool bKinect1Int = sensorData != null && sensorData.sensorInterface != null ?
 				(sensorData.sensorInterface.GetSensorPlatform() == KinectInterop.DepthSensorPlatform.KinectSDKv1) : false;
 
-			if(sensorData != null && bHiResSupported && !bKinect1Int && sensorData.color2DepthTexture)
+			if(computeBodyTexOnly && sensorData != null && sensorData.alphaBodyTexture)
 			{
+				GUI.DrawTexture(foregroundRect, sensorData.alphaBodyTexture);
+			}
+			else if(sensorData != null && bHiResSupported && !bKinect1Int && sensorData.color2DepthTexture)
+			{
+				//GUI.DrawTexture(foregroundRect, sensorData.alphaBodyTexture);
 				GUI.DrawTexture(foregroundRect, sensorData.color2DepthTexture);
 			}
 			else if(sensorData != null && !bKinect1Int && sensorData.depth2ColorTexture)
 			{
+				//GUI.DrawTexture(foregroundRect, sensorData.alphaBodyTexture);
 				GUI.DrawTexture(foregroundRect, sensorData.depth2ColorTexture);
 			}
 			else if(foregroundTex)
 			{
+				//GUI.DrawTexture(foregroundRect, sensorData.alphaBodyTexture);
 				GUI.DrawTexture(foregroundRect, foregroundTex);
 			}
 		}

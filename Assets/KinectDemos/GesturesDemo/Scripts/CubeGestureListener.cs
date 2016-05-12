@@ -137,10 +137,6 @@ public class CubeGestureListener : MonoBehaviour, KinectGestures.GestureListener
 		if(!manager || (userId != manager.GetPrimaryUserID()))
 			return;
 
-		// this function is currently needed only to display gesture progress, skip it otherwise
-		if(gestureInfo == null)
-			return;
-		
 		if((gesture == KinectGestures.Gestures.ZoomOut || gesture == KinectGestures.Gestures.ZoomIn) && progress > 0.5f)
 		{
 			if(gestureInfo != null)
@@ -158,6 +154,17 @@ public class CubeGestureListener : MonoBehaviour, KinectGestures.GestureListener
 			if(gestureInfo != null)
 			{
 				string sGestureText = string.Format ("{0} - {1:F0} degrees", gesture, screenPos.z);
+				gestureInfo.GetComponent<GUIText>().text = sGestureText;
+				
+				progressDisplayed = true;
+				progressGestureTime = Time.realtimeSinceStartup;
+			}
+		}
+		else if(gesture == KinectGestures.Gestures.Run && progress > 0.5f)
+		{
+			if(gestureInfo != null)
+			{
+				string sGestureText = string.Format ("{0} - progress: {1:F0}%", gesture, progress * 100);
 				gestureInfo.GetComponent<GUIText>().text = sGestureText;
 				
 				progressDisplayed = true;

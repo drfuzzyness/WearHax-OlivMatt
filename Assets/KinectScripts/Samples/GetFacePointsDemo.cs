@@ -6,6 +6,15 @@ using Microsoft.Kinect.Face;
 
 public class GetFacePointsDemo : MonoBehaviour 
 {
+	[Tooltip("Tracked face point.")]
+	public FacePointType facePoint = FacePointType.Nose;
+
+	[Tooltip("Transform used to show the selected face point in space.")]
+	public Transform facePointTransform;
+	
+	[Tooltip("GUI-Text to display face-information messages.")]
+	public GUIText faceInfoText;
+
 	private KinectManager manager = null;
 	private Kinect2Interface k2interface = null;
 
@@ -56,6 +65,37 @@ public class GetFacePointsDemo : MonoBehaviour
 						facePoints = k2interface.faceFrameResults[i].FacePointsInColorSpace;
 						break;
 					}
+				}
+			}
+		}
+
+		if(manager && manager.IsInitialized() && k2interface != null)
+		{
+			long userId = manager.GetPrimaryUserID();
+
+			if(manager.IsJointTracked(userId, (int)KinectInterop.JointType.Head))
+			{
+				//Vector3 headPos = manager.GetJointPosition(userId, (int)KinectInterop.JointType.Head);
+				string sStatus = string.Empty;  // string.Format("Head: {0}\n", headPos);
+
+				Vector2 facePointColor = GetFacePoint(facePoint);
+				if(facePointColor != Vector2.zero && !float.IsInfinity(facePointColor.x) && !float.IsInfinity(facePointColor.y))
+				{
+					Vector2 facePointDepth = manager.MapColorPointToDepthCoords(facePointColor, true);
+
+					if(facePointDepth != Vector2.zero && !float.IsInfinity(facePointDepth.x) && !float.IsInfinity(facePointDepth.y))
+					{
+						ushort depthValue = manager.GetDepthForPixel((int)facePointDepth.x, (int)facePointDepth.y);
+						Vector3 facePointPos = manager.MapDepthPointToSpaceCoords(facePointDepth, depthValue, true);
+
+						facePointTransform.position = facePointPos;
+						sStatus += string.Format("{0}: {1}", facePoint, facePointPos);
+					}
+				}
+
+				if(faceInfoText)
+				{
+					faceInfoText.text = sStatus;
 				}
 			}
 		}

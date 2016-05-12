@@ -9,8 +9,14 @@ public class GrabDropScript : MonoBehaviour
 	[Tooltip("Material used to outline the currently selected object.")]
 	public Material selectedObjectMaterial;
 	
-	[Tooltip("Speed of dragging of the selected object.")]
+	[Tooltip("Drag speed of the selected object.")]
 	public float dragSpeed = 3.0f;
+
+	[Tooltip("Minimum Z-position of the dragged object, when moving forward and back.")]
+	public float minZ = 0f;
+
+	[Tooltip("Maximum Z-position of the dragged object, when moving forward and back.")]
+	public float maxZ = 5f;
 
 	// public options (used by the Options GUI)
 	[Tooltip("Whether the objects obey gravity when released or not. Used by the Options GUI-window.")]
@@ -28,13 +34,19 @@ public class GrabDropScript : MonoBehaviour
 
 	// currently dragged object and its parameters
 	private GameObject draggedObject;
-	private float draggedObjectDepth;
+	//private float draggedObjectDepth;
 	private Vector3 draggedObjectOffset;
 	private Material draggedObjectMaterial;
+	private float draggedNormalZ;
 
 	// initial objects' positions and rotations (used for resetting objects)
 	private Vector3[] initialObjPos;
 	private Quaternion[] initialObjRot;
+
+	// normalized and pixel position of the cursor
+	private Vector3 screenNormalPos = Vector3.zero;
+	private Vector3 screenPixelPos = Vector3.zero;
+	private Vector3 newObjectPos = Vector3.zero;
 
 
 	void Start()
@@ -67,11 +79,11 @@ public class GrabDropScript : MonoBehaviour
 
 		if(manager != null && manager.IsInteractionInited())
 		{
-			Vector3 screenNormalPos = Vector3.zero;
-			Vector3 screenPixelPos = Vector3.zero;
-			
 			if(draggedObject == null)
 			{
+				screenNormalPos = Vector3.zero;
+				screenPixelPos = Vector3.zero;
+
 				// if there is a hand grip, select the underlying object and start dragging it.
 				if(manager.IsLeftHandPrimary())
 				{
@@ -110,8 +122,12 @@ public class GrabDropScript : MonoBehaviour
 							{
 								// an object was hit by the ray. select it and start drgging
 								draggedObject = obj;
-								draggedObjectDepth = draggedObject.transform.position.z - Camera.main.transform.position.z;
+								//draggedObjectDepth = draggedObject.transform.position.z - Camera.main.transform.position.z;
 								draggedObjectOffset = hit.point - draggedObject.transform.position;
+								draggedObjectOffset.z = 0; // don't change z-pos
+
+								draggedNormalZ = (minZ + screenNormalPos.z * (maxZ - minZ)) - 
+									draggedObject.transform.position.z; // start from the initial hand-z
 								
 								// set selection material
 								draggedObjectMaterial = draggedObject.GetComponent<Renderer>().material;
@@ -134,9 +150,11 @@ public class GrabDropScript : MonoBehaviour
 				// convert the normalized screen pos to 3D-world pos
 				screenPixelPos.x = (int)(screenNormalPos.x * Camera.main.pixelWidth);
 				screenPixelPos.y = (int)(screenNormalPos.y * Camera.main.pixelHeight);
-				screenPixelPos.z = screenNormalPos.z + draggedObjectDepth;
-				
-				Vector3 newObjectPos = Camera.main.ScreenToWorldPoint(screenPixelPos) - draggedObjectOffset;
+				//screenPixelPos.z = screenNormalPos.z + draggedObjectDepth;
+				screenPixelPos.z = (minZ + screenNormalPos.z * (maxZ - minZ)) - draggedNormalZ -
+					Camera.main.transform.position.z;
+
+				newObjectPos = Camera.main.ScreenToWorldPoint(screenPixelPos) - draggedObjectOffset;
 				draggedObject.transform.position = Vector3.Lerp(draggedObject.transform.position, newObjectPos, dragSpeed * Time.deltaTime);
 				
 				// check if the object (hand grip) was released

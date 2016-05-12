@@ -64,20 +64,20 @@ public class OverlayController : MonoBehaviour
 			}
 		}
 	}
-	
+
 	void Update () 
 	{
 		KinectManager manager = KinectManager.Instance;
 		
 		if(manager && manager.IsInitialized())
 		{
+			KinectInterop.SensorData sensorData = manager.GetSensorData();
+			
 			if(manager.autoHeightAngle == KinectManager.AutoHeightAngle.AutoUpdate || 
 			   manager.autoHeightAngle == KinectManager.AutoHeightAngle.AutoUpdateAndShowInfo ||
 			   currentCameraOffset != adjustedCameraOffset)
 			{
 				// update the cameras automatically, according to the current sensor height and angle
-				KinectInterop.SensorData sensorData = manager.GetSensorData();
-
 				if(foregroundCamera != null && sensorData != null)
 				{
 					foregroundCamera.transform.position = new Vector3(sensorData.depthCameraOffset + adjustedCameraOffset, 
@@ -94,9 +94,12 @@ public class OverlayController : MonoBehaviour
 				
 			}
 			
-			if(backgroundImage && (backgroundImage.texture == null))
+			if(backgroundImage)
 			{
-				backgroundImage.texture = manager.GetUsersClrTex();
+				if(backgroundImage.texture == null)
+				{
+					backgroundImage.texture = manager.GetUsersClrTex();
+				}
 			}
 
 			MonoBehaviour[] monoScripts = FindObjectsOfType(typeof(MonoBehaviour)) as MonoBehaviour[];

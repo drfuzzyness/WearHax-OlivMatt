@@ -17,7 +17,7 @@ public class LocateAvatarsAndGestureListeners : MonoBehaviour
 			// get the mono scripts. avatar controllers and gesture listeners are among them
 			MonoBehaviour[] monoScripts = FindObjectsOfType(typeof(MonoBehaviour)) as MonoBehaviour[];
 			
-			// add available avatar controllers
+			// locate the available avatar controllers
 			foreach(MonoBehaviour monoScript in monoScripts)
 			{
 				if(typeof(AvatarController).IsAssignableFrom(monoScript.GetType()) &&
@@ -28,7 +28,19 @@ public class LocateAvatarsAndGestureListeners : MonoBehaviour
 				}
 			}
 
-			// add available gesture listeners
+			// locate Kinect gesture manager, if any
+			manager.gestureManager = null;
+			foreach(MonoBehaviour monoScript in monoScripts)
+			{
+				if(typeof(KinectGestures).IsAssignableFrom(monoScript.GetType()) && 
+				   monoScript.enabled)
+				{
+					manager.gestureManager = (KinectGestures)monoScript;
+					break;
+				}
+			}
+
+			// locate the available gesture listeners
 			manager.gestureListeners.Clear();
 
 			foreach(MonoBehaviour monoScript in monoScripts)

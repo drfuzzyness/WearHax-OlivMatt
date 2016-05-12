@@ -28,6 +28,21 @@ public class FacetrackingManager : MonoBehaviour
 	[Tooltip("Whether the HD-face model mesh should be mirrored or not.")]
 	public bool mirroredModelMesh = true;
 
+	public enum TextureType : int { None, ColorMap, FaceRectangle }
+	[Tooltip("Whether the HD-face model mesh should be textured or not.")]
+	public TextureType texturedModelMesh = TextureType.ColorMap;
+
+	[Tooltip("Camera that will be used to overlay face mesh over the background.")]
+	public Camera foregroundCamera;
+	
+	[Tooltip("Scale factor for the face mesh.")]
+	[Range(0.1f, 2.0f)]
+	public float modelMeshScale = 1f;
+
+	[Tooltip("Vertical offset of the mesh above the head (in meters).")]
+	[Range(-0.5f, 0.5f)]
+	public float verticalMeshOffset = 0f;
+
 	[Tooltip("GUI-Text to display the FT-manager debug messages.")]
 	public GUIText debugText;
 
@@ -49,8 +64,9 @@ public class FacetrackingManager : MonoBehaviour
 	// whether the face model mesh was initialized
 	private bool bFaceModelMeshInited = false;
 
-	// Vertices of the face model
+	// Vertices and UV of the face model
 	private Vector3[] avModelVertices = null;
+	private Vector2[] avModelUV = null;
 	private bool bGotModelVertices = false;
 
 	// Head position and rotation
@@ -61,8 +77,8 @@ public class FacetrackingManager : MonoBehaviour
 	private bool bGotHeadRot = false;
 	
 	// Tracked face rectangle
-//	private Rect faceRect;
-//	private bool bGotFaceRect;
+	private Rect faceRect = new Rect();
+	//private bool bGotFaceRect;
 
 	// primary user ID, as reported by KinectManager
 	private long primaryUserID = 0;
@@ -234,10 +250,10 @@ public class FacetrackingManager : MonoBehaviour
 	/// <param name="userId">User ID</param>
 	public Rect GetFaceColorRect(long userId)
 	{
-		Rect faceRect = new Rect();
-		sensorData.sensorInterface.GetFaceRect(userId, ref faceRect);
+		Rect faceColorRect = new Rect();
+		sensorData.sensorInterface.GetFaceRect(userId, ref faceColorRect);
 
-		return faceRect;
+		return faceColorRect;
 	}
 	
 	/// <summary>
@@ -509,6 +525,8 @@ public class FacetrackingManager : MonoBehaviour
 			}
 
 			// update the face tracker
+			isTrackingFace = false;
+
 			if(sensorData.sensorInterface.UpdateFaceTracking())
 			{
 				// estimate the tracking state
@@ -520,7 +538,7 @@ public class FacetrackingManager : MonoBehaviour
 					lastFaceTrackedTime = Time.realtimeSinceStartup;
 					
 					// get face rectangle
-					//bGotFaceRect = sensorData.sensorInterface.GetFaceRect(primaryUserID, ref faceRect);
+					/**bGotFaceRect =*/ sensorData.sensorInterface.GetFaceRect(primaryUserID, ref faceRect);
 					
 					// get head position
 					bGotHeadPos = sensorData.sensorInterface.GetHeadPosition(primaryUserID, ref headPos);
@@ -534,18 +552,18 @@ public class FacetrackingManager : MonoBehaviour
 					// get the shape units
 					bGotSU = sensorData.sensorInterface.GetShapeUnits(primaryUserID, ref dictSU);
 
-					if(faceModelMesh != null && faceModelMesh.activeInHierarchy)
+					//if(faceModelMesh != null && faceModelMesh.activeInHierarchy)
 					{
 						// apply model vertices to the mesh
 						if(!bFaceModelMeshInited)
 						{
-							CreateFaceModelMesh();
+							bFaceModelMeshInited = CreateFaceModelMesh(faceModelMesh, headPos, ref avModelVertices, ref avModelUV, ref bGotModelVertices);
 						}
 					}
 					
 					if(getFaceModelData)
 					{
-						UpdateFaceModelMesh();
+						UpdateFaceModelMesh(primaryUserID, faceModelMesh, headPos, headRot, faceRect, ref avModelVertices, ref avModelUV, ref bGotModelVertices);
 					}
 				}
 				else if((Time.realtimeSinceStartup - lastFaceTrackedTime) <= faceTrackingTolerance)
@@ -553,11 +571,11 @@ public class FacetrackingManager : MonoBehaviour
 					// allow tolerance in tracking
 					isTrackingFace = true;
 				}
-
-				if(faceModelMesh != null && bFaceModelMeshInited)
-				{
-					faceModelMesh.SetActive(isTrackingFace);
-				}
+			}
+			
+			if(faceModelMesh != null && bFaceModelMeshInited)
+			{
+				faceModelMesh.SetActive(isTrackingFace);
 			}
 		}
 	}
@@ -579,74 +597,196 @@ public class FacetrackingManager : MonoBehaviour
 			}
 		}
 	}
-	
-	private void CreateFaceModelMesh()
+
+
+	public bool CreateFaceModelMesh(GameObject faceModelMesh, Vector3 headPos, ref Vector3[] avModelVertices, ref Vector2[] avModelUV, ref bool bGotModelVertices)
 	{
-		if(faceModelMesh == null)
-			return;
+//		if(faceModelMesh == null)
+//			return false;
 
 		int iNumTriangles = sensorData.sensorInterface.GetFaceModelTrianglesCount();
 		if(iNumTriangles <= 0)
-			return;
+			return false;
 
 		int[] avModelTriangles = new int[iNumTriangles];
 		bool bGotModelTriangles = sensorData.sensorInterface.GetFaceModelTriangles(mirroredModelMesh, ref avModelTriangles);
 
 		if(!bGotModelTriangles)
-			return;
+			return false;
 		
 		int iNumVertices = sensorData.sensorInterface.GetFaceModelVerticesCount(0);
 		if(iNumVertices < 0)
-			return;
+			return false;
 
 		avModelVertices = new Vector3[iNumVertices];
 		bGotModelVertices = sensorData.sensorInterface.GetFaceModelVertices(0, ref avModelVertices);
 
+		avModelUV = new Vector2[iNumVertices];
+
 		if(!bGotModelVertices)
-			return;
+			return false;
 
-		Vector2[] avModelUV = new Vector2[iNumVertices];
-
-		//Quaternion faceModelRot = faceModelMesh.transform.rotation;
-		//faceModelMesh.transform.rotation = Quaternion.identity;
-
-		Mesh mesh = new Mesh();
-		mesh.name = "FaceMesh";
-		faceModelMesh.GetComponent<MeshFilter>().mesh = mesh;
+		// make vertices relative to the head pos
+		Matrix4x4 kinectToWorld = KinectManager.Instance ? KinectManager.Instance.GetKinectToWorldMatrix() : Matrix4x4.identity;
+		Vector3 headPosWorld = kinectToWorld.MultiplyPoint3x4(headPos);
 		
-		mesh.vertices = avModelVertices;
-		mesh.uv = avModelUV;
-		mesh.triangles = avModelTriangles;
-		mesh.RecalculateNormals();
+		for(int i = 0; i < avModelVertices.Length; i++)
+		{
+			avModelVertices[i] = kinectToWorld.MultiplyPoint3x4(avModelVertices[i]) - headPosWorld;
+		}
 
-		//faceModelMesh.transform.rotation = faceModelRot;
+		if (faceModelMesh) 
+		{
+			Mesh mesh = new Mesh();
+			mesh.name = "FaceMesh";
+			faceModelMesh.GetComponent<MeshFilter>().mesh = mesh;
 
-		bFaceModelMeshInited = true;
+			mesh.vertices = avModelVertices;
+			//mesh.uv = avModelUV;
+			mesh.triangles = avModelTriangles;
+			mesh.RecalculateNormals();
+
+			faceModelMesh.transform.position = headPos;
+			//faceModelMesh.transform.rotation = faceModelRot;
+		}
+
+		//bFaceModelMeshInited = true;
+		return true;
 	}
 
-	private void UpdateFaceModelMesh()
+
+	public void UpdateFaceModelMesh(long userId, GameObject faceModelMesh, Vector3 headPos, Quaternion headRot, Rect faceRect,
+									ref Vector3[] avModelVertices, ref Vector2[] avModelUV, ref bool bGotModelVertices)
 	{
 		// init the vertices array if needed
 		if(avModelVertices == null)
 		{
-			int iNumVertices = sensorData.sensorInterface.GetFaceModelVerticesCount(primaryUserID);
+			int iNumVertices = sensorData.sensorInterface.GetFaceModelVerticesCount(userId);
 			avModelVertices = new Vector3[iNumVertices];
 		}
 
 		// get face model vertices
-		bGotModelVertices = sensorData.sensorInterface.GetFaceModelVertices(primaryUserID, ref avModelVertices);
+		bGotModelVertices = sensorData.sensorInterface.GetFaceModelVertices(userId, ref avModelVertices);
 		
-		if(bGotModelVertices && faceModelMesh != null && bFaceModelMeshInited)
+		if(bGotModelVertices && faceModelMesh != null)
 		{
 			//Quaternion faceModelRot = faceModelMesh.transform.rotation;
 			//faceModelMesh.transform.rotation = Quaternion.identity;
+
+			KinectManager kinectManager = KinectManager.Instance;
+			
+			if(texturedModelMesh != TextureType.None)
+			{
+				float colorWidth = (float)kinectManager.GetColorImageWidth();
+				float colorHeight = (float)kinectManager.GetColorImageHeight();
+
+				//bool bGotFaceRect = sensorData.sensorInterface.GetFaceRect(userId, ref faceRect);
+				bool faceRectValid = /**bGotFaceRect &&*/ faceRect.width > 0 && faceRect.height > 0;
+
+				if(texturedModelMesh == TextureType.ColorMap &&
+				   faceModelMesh.GetComponent<MeshRenderer>().material.mainTexture == null)
+				{
+					faceModelMesh.GetComponent<MeshRenderer>().material.mainTexture = kinectManager.GetUsersClrTex();
+				}
+
+				for(int i = 0; i < avModelVertices.Length; i++)
+				{
+					Vector2 posDepth = kinectManager.MapSpacePointToDepthCoords(avModelVertices[i]);
+
+					bool bUvSet = false;
+					if(posDepth != Vector2.zero)
+					{
+						ushort depth = kinectManager.GetDepthForPixel((int)posDepth.x, (int)posDepth.y);
+						Vector2 posColor = kinectManager.MapDepthPointToColorCoords(posDepth, depth);
+
+						if(posColor != Vector2.zero && !float.IsInfinity(posColor.x) && !float.IsInfinity(posColor.y))
+						{
+							if(texturedModelMesh == TextureType.ColorMap)
+							{
+								avModelUV[i] = new Vector2(posColor.x / colorWidth, posColor.y / colorHeight);
+								bUvSet = true;
+							}
+							else if(texturedModelMesh == TextureType.FaceRectangle && faceRectValid)
+							{
+								avModelUV[i] = new Vector2((posColor.x - faceRect.x) / faceRect.width, 
+								                           -(posColor.y - faceRect.y) / faceRect.height);
+								bUvSet = true;
+							}
+						}
+					}
+
+					if(!bUvSet)
+					{
+						avModelUV[i] = Vector2.zero;
+					}
+				}
+			}
+			else
+			{
+				if(faceModelMesh.GetComponent<MeshRenderer>().material.mainTexture != null)
+				{
+					faceModelMesh.GetComponent<MeshRenderer>().material.mainTexture = null;
+				}
+			}
+
+			// make vertices relative to the head pos
+			Matrix4x4 kinectToWorld = kinectManager ? kinectManager.GetKinectToWorldMatrix() : Matrix4x4.identity;
+			Vector3 headPosWorld = kinectToWorld.MultiplyPoint3x4(headPos);
+
+			if (verticalMeshOffset != 0f) 
+			{
+				Vector3 headPosOfs = headRot * new Vector3(0, -verticalMeshOffset, 0);
+				headPosWorld += headPosOfs;
+			}
+
+			for(int i = 0; i < avModelVertices.Length; i++)
+			{
+				avModelVertices[i] = kinectToWorld.MultiplyPoint3x4(avModelVertices[i]) - headPosWorld;
+			}
 			
 			Mesh mesh = faceModelMesh.GetComponent<MeshFilter>().mesh;
 			mesh.vertices = avModelVertices;
+			if(texturedModelMesh != TextureType.None)
+			{
+				mesh.uv = avModelUV;
+			}
+
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 
+			// check for head pos overlay
+			Vector3 newHeadPos = headPos;
+
+			if(foregroundCamera)
+			{
+				// get the background rectangle (use the portrait background, if available)
+				Rect backgroundRect = foregroundCamera.pixelRect;
+				PortraitBackground portraitBack = PortraitBackground.Instance;
+				
+				if(portraitBack && portraitBack.enabled)
+				{
+					backgroundRect = portraitBack.GetBackgroundRect();
+				}
+				
+				if(kinectManager)
+				{
+					Vector3 posColorOverlay = kinectManager.GetJointPosColorOverlay(primaryUserID, (int)KinectInterop.JointType.Head, foregroundCamera, backgroundRect);
+					
+					if(posColorOverlay != Vector3.zero)
+					{
+						newHeadPos = posColorOverlay;
+					}
+				}
+			}
+			
+			faceModelMesh.transform.position = newHeadPos;
 			//faceModelMesh.transform.rotation = faceModelRot;
+
+			// apply scale factor
+			if(faceModelMesh.transform.localScale.x != modelMeshScale)
+			{
+				faceModelMesh.transform.localScale = new Vector3(modelMeshScale, modelMeshScale, modelMeshScale);
+			}
 		}
 	}
 	

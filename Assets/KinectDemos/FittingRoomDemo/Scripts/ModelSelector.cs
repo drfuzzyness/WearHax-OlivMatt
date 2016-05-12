@@ -11,6 +11,16 @@ public class ModelSelector : MonoBehaviour
 	[Tooltip("Makes the initial model position relative to this camera, to be equal to the player's position, relative to the sensor.")]
 	public Camera modelRelativeToCamera = null;
 
+	[Tooltip("Camera that will be used to overlay the model over the background.")]
+	public Camera foregroundCamera;
+
+	[Tooltip("Whole body scale factor that might be used for fine-tuning of body-scale.")]
+	[Range(0.9f, 1.1f)]
+	public float bodyScaleFactor = 1.03f;
+
+	[Tooltip("Whether the scale is updated continuously or just after the calibration pose.")]
+	public bool continuousScaling = true;
+	
 
 	private Rect menuWindowRectangle;
 	private string[] modelNames;
@@ -99,6 +109,7 @@ public class ModelSelector : MonoBehaviour
 
 		AvatarController ac = selModel.AddComponent<AvatarController>();
 		ac.posRelativeToCamera = modelRelativeToCamera;
+		ac.posRelOverlayColor = (foregroundCamera != null);
 		ac.mirroredMovement = true;
 		ac.verticalMovement = true;
 		ac.smoothFactor = 0f;
@@ -116,7 +127,9 @@ public class ModelSelector : MonoBehaviour
 
 		AvatarScaler scaler = selModel.AddComponent<AvatarScaler>();
 		scaler.mirroredAvatar = true;
-		scaler.continuousScaling = true;
+		scaler.bodyScaleFactor = bodyScaleFactor;
+		scaler.continuousScaling = continuousScaling;
+		scaler.foregroundCamera = foregroundCamera;
 
 		scaler.Start();
 	}

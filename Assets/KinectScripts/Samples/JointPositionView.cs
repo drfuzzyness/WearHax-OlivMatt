@@ -8,11 +8,17 @@ public class JointPositionView : MonoBehaviour
 	[Tooltip("The Kinect joint we want to track.")]
 	public KinectInterop.JointType trackedJoint = KinectInterop.JointType.SpineBase;
 
-	[Tooltip("Whether the joint view is mirrored or not.")]
-	public bool mirroredView = false;
+	[Tooltip("Whether the movement is relative to transform's initial position, or is in absolute coordinates.")]
+	public bool relToInitialPos = false;
+	
+	[Tooltip("Whether the z-movement is inverted or not.")]
+	public bool invertedZMovement = false;
 
-	[Tooltip("Whether the displayed position is in Kinect coordinates, or offset from the initial position.")]
-	public bool displayKinectPos = false;
+	[Tooltip("Transform offset to the Kinect-reported position.")]
+	public Vector3 transformOffset = Vector3.zero;
+
+	[Tooltip("Whether the displayed position is in Kinect coordinates, or in world coordinates.")]
+	public bool useKinectSpace = false;
 
 	//public bool moveTransform = true;
 
@@ -24,8 +30,10 @@ public class JointPositionView : MonoBehaviour
 
 
 	private Vector3 initialPosition = Vector3.zero;
-	private long calibratedUserId = 0;
+	private long currentUserId = 0;
 	private Vector3 initialUserOffset = Vector3.zero;
+
+	private Vector3 vPosJoint = Vector3.zero;
 
 
 	void Start()
@@ -47,18 +55,22 @@ public class JointPositionView : MonoBehaviour
 				
 				if(manager.IsJointTracked(userId, iJointIndex))
 				{
-					Vector3 vPosJoint = manager.GetJointPosition(userId, iJointIndex);
-					vPosJoint.z = !mirroredView ? -vPosJoint.z : vPosJoint.z;
+					if(useKinectSpace)
+						vPosJoint = manager.GetJointKinectPosition(userId, iJointIndex);
+					else
+						vPosJoint = manager.GetJointPosition(userId, iJointIndex);
 
-					if(userId != calibratedUserId)
+					vPosJoint.z = invertedZMovement ? -vPosJoint.z : vPosJoint.z;
+					vPosJoint += transformOffset;
+
+					if(userId != currentUserId)
 					{
-						calibratedUserId = userId;
+						currentUserId = userId;
 						initialUserOffset = vPosJoint;
 					}
 
-					Vector3 vPosObject = !displayKinectPos ? (vPosJoint - initialUserOffset) : vPosJoint;
-					vPosObject = initialPosition + vPosObject;
-					
+					Vector3 vPosObject = relToInitialPos ? initialPosition + (vPosJoint - initialUserOffset) : vPosJoint;
+
 					if(debugText)
 					{
 						debugText.GetComponent<GUIText>().text = string.Format("{0} - ({1:F3}, {2:F3}, {3:F3})", trackedJoint, 

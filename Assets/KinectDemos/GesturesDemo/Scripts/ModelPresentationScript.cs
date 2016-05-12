@@ -14,7 +14,7 @@ public class ModelPresentationScript : MonoBehaviour
 	void Start() 
 	{
 		// hide mouse cursor
-		Cursor.visible = false;
+		//Cursor.visible = false;
 		
 		// get the gestures listener
 		gestureListener = ModelGestureListener.Instance;

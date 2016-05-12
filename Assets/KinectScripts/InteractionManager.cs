@@ -24,8 +24,8 @@ public class InteractionManager : MonoBehaviour
 	[Tooltip("Index of the player, tracked by this component. 0 means the 1st player, 1 - the 2nd one, 2 - the 3rd one, etc.")]
 	public int playerIndex = 0;
 	
-	[Tooltip("Whether to use the GUI hand-cursor as on-screen cursor.")]
-	public bool useHandCursor = true;
+	[Tooltip("Whether to show the hand-moved cursor on the screen or not. The following textures need to be set too.")]
+	public bool showHandCursor = true;
 	
 	[Tooltip("Hand-cursor texture for the hand-grip state.")]
 	public Texture gripHandTexture;
@@ -35,7 +35,7 @@ public class InteractionManager : MonoBehaviour
 	public Texture normalHandTexture;
 
 	[Tooltip("Smooth factor for cursor movement.")]
-	public float smoothFactor = 3f;
+	public float smoothFactor = 10f;
 	
 	[Tooltip("Whether hand clicks (hand not moving for ~2 seconds) are enabled or not.")]
 	public bool allowHandClicks = true;
@@ -338,7 +338,7 @@ public class InteractionManager : MonoBehaviour
 					leftHandScreenPos.x = Mathf.Clamp01((leftHandPos.x - leftIboxLeftBotBack.x) / (leftIboxRightTopFront.x - leftIboxLeftBotBack.x));
 					leftHandScreenPos.y = Mathf.Clamp01((leftHandPos.y - leftIboxLeftBotBack.y) / (leftIboxRightTopFront.y - leftIboxLeftBotBack.y));
 					leftHandScreenPos.z = Mathf.Clamp01((leftIboxLeftBotBack.z - leftHandPos.z) / (leftIboxLeftBotBack.z - leftIboxRightTopFront.z));
-					
+
 					bool wasLeftHandInteracting = isLeftHandInteracting;
 					isLeftHandInteracting = (leftHandPos.x >= (leftIboxLeftBotBack.x - 1.0f)) && (leftHandPos.x <= (leftIboxRightTopFront.x + 0.5f)) &&
 						(leftHandPos.y >= (leftIboxLeftBotBack.y - 0.1f)) && (leftHandPos.y <= (leftIboxRightTopFront.y + 0.7f)) &&
@@ -411,7 +411,7 @@ public class InteractionManager : MonoBehaviour
 					rightHandScreenPos.x = Mathf.Clamp01((rightHandPos.x - rightIboxLeftBotBack.x) / (rightIboxRightTopFront.x - rightIboxLeftBotBack.x));
 					rightHandScreenPos.y = Mathf.Clamp01((rightHandPos.y - rightIboxLeftBotBack.y) / (rightIboxRightTopFront.y - rightIboxLeftBotBack.y));
 					rightHandScreenPos.z = Mathf.Clamp01((rightIboxLeftBotBack.z - rightHandPos.z) / (rightIboxLeftBotBack.z - rightIboxRightTopFront.z));
-					
+
 					bool wasRightHandInteracting = isRightHandInteracting;
 					isRightHandInteracting = (rightHandPos.x >= (rightIboxLeftBotBack.x - 0.5f)) && (rightHandPos.x <= (rightIboxRightTopFront.x + 1.0f)) &&
 						(rightHandPos.y >= (rightIboxLeftBotBack.y - 0.1f)) && (rightHandPos.y <= (rightIboxRightTopFront.y + 0.7f)) &&
@@ -519,14 +519,15 @@ public class InteractionManager : MonoBehaviour
 
 					if((leftHandClickProgress < 0.8f) /**&& !isLeftHandPress*/)
 					{
-						cursorScreenPos = Vector3.Lerp(cursorScreenPos, leftHandScreenPos, smoothFactor * Time.deltaTime);
+						float smooth = smoothFactor * Time.deltaTime;
+						if(smooth == 0f) smooth = 1f;
+						
+						cursorScreenPos = Vector3.Lerp(cursorScreenPos, leftHandScreenPos, smooth);
 					}
-//					else
-//					{
-//						leftHandScreenPos = cursorScreenPos;
-//					}
 
-					if(controlMouseCursor && !useHandCursor)
+					// move mouse-only if there is no cursor texture
+					if(controlMouseCursor && 
+					   (!showHandCursor || (!gripHandTexture && !releaseHandTexture && !normalHandTexture)))
 					{
 						MouseControl.MouseMove(cursorScreenPos, debugText);
 					}
@@ -566,14 +567,15 @@ public class InteractionManager : MonoBehaviour
 
 					if((rightHandClickProgress < 0.8f) /**&& !isRightHandPress*/)
 					{
-						cursorScreenPos = Vector3.Lerp(cursorScreenPos, rightHandScreenPos, smoothFactor * Time.deltaTime);
+						float smooth = smoothFactor * Time.deltaTime;
+						if(smooth == 0f) smooth = 1f;
+						
+						cursorScreenPos = Vector3.Lerp(cursorScreenPos, rightHandScreenPos, smooth);
 					}
-//					else
-//					{
-//						rightHandScreenPos = cursorScreenPos;
-//					}
 
-					if(controlMouseCursor && !useHandCursor)
+					// move mouse-only if there is no cursor texture
+					if(controlMouseCursor && 
+					   (!showHandCursor || (!gripHandTexture && !releaseHandTexture && !normalHandTexture)))
 					{
 						MouseControl.MouseMove(cursorScreenPos, debugText);
 					}
@@ -610,10 +612,9 @@ public class InteractionManager : MonoBehaviour
 		}
 		
 	}
-	
-	
+
 	// converts hand state to hand event type
-	private HandEventType HandStateToEvent(KinectInterop.HandState handState, HandEventType lastEventType)
+	public static HandEventType HandStateToEvent(KinectInterop.HandState handState, HandEventType lastEventType)
 	{
 		switch(handState)
 		{
@@ -631,7 +632,7 @@ public class InteractionManager : MonoBehaviour
 		return HandEventType.None;
 	}
 	
-	
+
 	void OnGUI()
 	{
 		if(!interactionInited)
@@ -644,7 +645,7 @@ public class InteractionManager : MonoBehaviour
 
 			//if(isLeftHandPrimary)
 			{
-				sGuiText += "LCursor: " + leftHandScreenPos.ToString();
+				sGuiText += "LCursor" + (isLeftHandPrimary ? "*: " : " : ") + leftHandScreenPos.ToString();
 				
 				if(lastLeftHandEvent == HandEventType.Grip)
 				{
@@ -672,7 +673,7 @@ public class InteractionManager : MonoBehaviour
 			
 			//if(isRightHandPrimary)
 			{
-				sGuiText += "\nRCursor: " + rightHandScreenPos.ToString();
+				sGuiText += "\nRCursor" + (isRightHandPrimary ? "*: " : " : ") + rightHandScreenPos.ToString();
 				
 				if(lastRightHandEvent == HandEventType.Grip)
 				{
@@ -702,7 +703,7 @@ public class InteractionManager : MonoBehaviour
 		}
 		
 		// display the cursor status and position
-		if(useHandCursor)
+		if(showHandCursor)
 		{
 			Texture texture = null;
 			
@@ -726,24 +727,25 @@ public class InteractionManager : MonoBehaviour
 				texture = normalHandTexture;
 			}
 			
-			if(useHandCursor)
+			//if(useHandCursor)
 			{
-//				if(handCursor.guiTexture && texture)
-//				{
-//					handCursor.guiTexture.texture = texture;
-//				}
-
 				if((texture != null) && (isLeftHandPrimary || isRightHandPrimary))
 				{
-					//handCursor.transform.position = cursorScreenPos; // Vector3.Lerp(handCursor.transform.position, cursorScreenPos, 3 * Time.deltaTime);
-					Rect rectTexture = new Rect(cursorScreenPos.x * Screen.width - texture.width / 2, (1f - cursorScreenPos.y) * Screen.height - texture.height / 2, 
-					                            texture.width, texture.height);
-					GUI.DrawTexture(rectTexture, texture);
+					Rect rectTexture; 
 
 					if(controlMouseCursor)
 					{
 						MouseControl.MouseMove(cursorScreenPos, debugText);
+						rectTexture = new Rect(Input.mousePosition.x - texture.width / 2, Screen.height - Input.mousePosition.y - texture.height / 2, 
+						                       texture.width, texture.height);
 					}
+					else 
+					{
+						rectTexture = new Rect(cursorScreenPos.x * Screen.width - texture.width / 2, (1f - cursorScreenPos.y) * Screen.height - texture.height / 2, 
+						                       texture.width, texture.height);
+					}
+
+					GUI.DrawTexture(rectTexture, texture);
 				}
 			}
 		}

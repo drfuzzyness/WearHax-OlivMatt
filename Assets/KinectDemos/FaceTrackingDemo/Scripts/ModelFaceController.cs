@@ -12,8 +12,21 @@ public class ModelFaceController : MonoBehaviour
 	[Tooltip("Whether the model's head is facing the player or not.")]
 	public bool mirroredHeadMovement = true;
 
+	[Tooltip("Camera that will be used to overlay model's head over the color background.")]
+	public Camera foregroundCamera;
+
+	// for testing purposes
+	//public Transform overlayObj;
+	
+	[Tooltip("Vertical offset of the model above the head position.")]
+	public float verticalOffset = 0f;
+	
+	[Tooltip("Scale factor for the model.")]
+	[Range(0.1f, 2.0f)]
+	public float modelScaleFactor = 1f;
+	
 	[Tooltip("Smooth factor used for head movement and head-joint rotations.")]
-	public float smoothFactor = 5f;
+	public float smoothFactor = 10f;
 	
 	// Upper Lip Left
 	[Tooltip("Left upper lip joint.")]
@@ -145,9 +158,9 @@ public class ModelFaceController : MonoBehaviour
 	{
 		if(HeadTransform != null)
 		{
-			HeadInitialPosition = HeadTransform.localPosition;
+			HeadInitialPosition = HeadTransform.position;
 			//HeadInitialPosition.z = 0;
-			HeadInitialRotation = HeadTransform.localRotation;
+			HeadInitialRotation = HeadTransform.rotation;
 		}
 		
 		UpperLipLeftNeutral = GetJointRotation(UpperLipLeft, UpperLipLeftAxis);
@@ -191,20 +204,84 @@ public class ModelFaceController : MonoBehaviour
 			if(HeadTransform != null)
 			{
 				// head position
-				Vector3 newPosition = HeadInitialPosition + manager.GetHeadPosition(mirroredHeadMovement);
-
-				if(smoothFactor != 0f)
-					HeadTransform.localPosition = Vector3.Lerp(HeadTransform.localPosition, newPosition, smoothFactor * Time.deltaTime);
-				else
-					HeadTransform.localPosition = newPosition;
-
+				Vector3 newPosition = manager.GetHeadPosition(mirroredHeadMovement);
+				
 				// head rotation
 				Quaternion newRotation = HeadInitialRotation * manager.GetHeadRotation(mirroredHeadMovement);
-
+				
+				// rotational fix, provided by Richard Borys:
+				// The added rotation fixes rotational error that occurs when person is not centered in the middle of the kinect
+				Vector3 addedRotation = newPosition.z != 0f ? new Vector3(Mathf.Rad2Deg * (Mathf.Tan(newPosition.y) / newPosition.z),
+				                                                          Mathf.Rad2Deg * (Mathf.Tan(newPosition.x) / newPosition.z), 0) : Vector3.zero;
+				
+				addedRotation.x = newRotation.eulerAngles.x + addedRotation.x;
+				addedRotation.y = newRotation.eulerAngles.y + addedRotation.y;
+				addedRotation.z = newRotation.eulerAngles.z + addedRotation.z;
+				
+				newRotation = Quaternion.Euler(addedRotation.x, addedRotation.y, addedRotation.z);
+				// end of rotational fix
+				
 				if(smoothFactor != 0f)
-					HeadTransform.localRotation = Quaternion.Slerp(HeadTransform.localRotation, newRotation, smoothFactor * Time.deltaTime);
+					HeadTransform.rotation = Quaternion.Slerp(HeadTransform.rotation, newRotation, smoothFactor * Time.deltaTime);
 				else
-					HeadTransform.localRotation = newRotation;
+					HeadTransform.rotation = newRotation;
+
+				// check for head pos overlay
+				if(foregroundCamera)
+				{
+					// get the background rectangle (use the portrait background, if available)
+					Rect backgroundRect = foregroundCamera.pixelRect;
+					PortraitBackground portraitBack = PortraitBackground.Instance;
+					
+					if(portraitBack && portraitBack.enabled)
+					{
+						backgroundRect = portraitBack.GetBackgroundRect();
+					}
+
+					KinectManager kinectManager = KinectManager.Instance;
+
+					if(kinectManager)
+					{
+						long userId = kinectManager.GetUserIdByIndex(manager.playerIndex);
+						Vector3 posColorOverlay = kinectManager.GetJointPosColorOverlay(userId, (int)KinectInterop.JointType.Head, foregroundCamera, backgroundRect);
+						
+						if(posColorOverlay != Vector3.zero)
+						{
+							newPosition = posColorOverlay;
+
+//							if(overlayObj)
+//							{
+//								overlayObj.position = newPosition;
+//							}
+						}
+					}
+				}
+				else
+				{
+					// move around the initial position
+					newPosition += HeadInitialPosition;
+				}
+
+				// vertical offet
+				if(verticalOffset != 0f)
+				{
+					// add the vertical offset
+					Vector3 dirHead = new Vector3(0, verticalOffset, 0);
+					dirHead = HeadTransform.InverseTransformDirection(dirHead);
+					newPosition += dirHead;
+				}
+
+				// set the position
+				if(smoothFactor != 0f)
+					HeadTransform.position = Vector3.Lerp(HeadTransform.position, newPosition, smoothFactor * Time.deltaTime);
+				else
+					HeadTransform.position = newPosition;
+
+				// scale factor
+				if(HeadTransform.localScale.x != modelScaleFactor)
+				{
+					HeadTransform.localScale = new Vector3(modelScaleFactor, modelScaleFactor, modelScaleFactor);
+				}
 			}
 			
 			// apply animation units
@@ -261,6 +338,14 @@ public class ModelFaceController : MonoBehaviour
 			fAU6_right = (platform == KinectInterop.DepthSensorPlatform.KinectSDKv2) ? (fAU6_right * 2 - 1) : fAU6_right;
 			SetJointRotation(UpperEyelidRight, UpperEyelidRightAxis, fAU6_right, UpperEyelidRightNeutral, UpperEyelidRightLowered);
 			SetJointRotation(LowerEyelidRight, LowerEyelidRightAxis, fAU6_right, LowerEyelidRightNeutral, LowerEyelidRightRaised);
+		}
+		else
+		{
+			// hide the model behind the camera
+			if(HeadTransform && HeadTransform.position.z >= 0f)
+			{
+				HeadTransform.position = new Vector3(0f, 0f, -10f);
+			}
 		}
 	}
 	

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class LoadFirstLevel : MonoBehaviour 
 {
@@ -13,7 +14,7 @@ public class LoadFirstLevel : MonoBehaviour
 		if(!levelLoaded && manager && KinectManager.IsKinectInitialized())
 		{
 			levelLoaded = true;
-			Application.LoadLevel(1);
+			SceneManager.LoadScene(1);
 		}
 	}
 	

@@ -11,7 +11,7 @@ public class AvatarScaler : MonoBehaviour
 	public bool mirroredAvatar = false;
 
 	[Tooltip("Whole body scale factor (including arms and legs) that might be used for body-scale fine tuning.")]
-	public float bodyScaleFactor = 1.03f;
+	public float bodyScaleFactor = 1.02f;
 	[Tooltip("Additional scale factor for arms that might be used for arms-scale fine tuning.")]
 	public float armScaleFactor = 1.0f;
 	[Tooltip("Additional scale factor for legs that might be used for legs-scale fine tuning.")]
@@ -23,6 +23,9 @@ public class AvatarScaler : MonoBehaviour
 	[Tooltip("Scale smoothing factor used in case of continuous scaling.")]
 	public float smoothFactor = 5f;
 
+	[Tooltip("Camera that will be used to overlay the model over the background.")]
+	public Camera foregroundCamera;
+	
 	[Tooltip("GUI-Text to display the avatar-scaler debug messages.")]
 	public GUIText debugText;
 	
@@ -296,21 +299,17 @@ public class AvatarScaler : MonoBehaviour
 	private bool GetUserBodyHeight(KinectManager manager, float scaleFactor, ref float height)
 	{
 		height = 0f;
-		
-		if(manager && manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.HipLeft) &&
-		   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.HipRight) &&
-		   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.ShoulderLeft) &&
-		   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.ShoulderRight))
-		{
-			//Vector3 posHipCenter = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.SpineBase);
-			Vector3 posHipLeft = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.HipLeft);
-			Vector3 posHipRight = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.HipRight);
-			Vector3 posHipCenter = (posHipLeft + posHipRight) / 2;
-			
-			Vector3 posShoulderLeft = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.ShoulderLeft);
-			Vector3 posShoulderRight = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.ShoulderRight);
-			Vector3 posShoulderCenter = (posShoulderLeft + posShoulderRight) / 2;
 
+		Vector3 posHipLeft = GetJointPosition(manager, (int)KinectInterop.JointType.HipLeft);
+		Vector3 posHipRight = GetJointPosition(manager, (int)KinectInterop.JointType.HipRight);
+		Vector3 posShoulderLeft = GetJointPosition(manager, (int)KinectInterop.JointType.ShoulderLeft);
+		Vector3 posShoulderRight = GetJointPosition(manager, (int)KinectInterop.JointType.ShoulderRight);
+
+		if(posHipLeft != Vector3.zero && posHipRight != Vector3.zero &&
+		   posShoulderLeft != Vector3.zero && posShoulderRight != Vector3.zero)
+		{
+			Vector3 posHipCenter = (posHipLeft + posHipRight) / 2;
+			Vector3 posShoulderCenter = (posShoulderLeft + posShoulderRight) / 2;
 			height = (posShoulderCenter.y - posHipCenter.y) * scaleFactor;
 			
 			return true;
@@ -323,14 +322,12 @@ public class AvatarScaler : MonoBehaviour
 	{
 		length = 0f;
 		
-		if(manager && manager.IsJointTracked(currentUserId, (int)baseJoint) &&
-		   manager.IsJointTracked(currentUserId, (int)endJoint))
+		Vector3 vPos1 = GetJointPosition(manager, (int)baseJoint);
+		Vector3 vPos2 = GetJointPosition(manager, (int)endJoint);
+		
+		if(vPos1 != Vector3.zero && vPos2 != Vector3.zero)
 		{
-			Vector3 vPos1 = manager.GetJointPosition(currentUserId, (int)baseJoint);
-			Vector3 vPos2 = manager.GetJointPosition(currentUserId, (int)endJoint);
-
 			length = (vPos2 - vPos1).magnitude * scaleFactor;
-			
 			return true;
 		}
 		
@@ -395,19 +392,17 @@ public class AvatarScaler : MonoBehaviour
 			
 			if(leftUpperArm && rightUpperArm && leftUpperLeg && rightUpperLeg)
 			{
-				if(manager && manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.ShoulderLeft) &&
-				   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.ShoulderRight) &&
-				   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.HipLeft) &&
-				   manager.IsJointTracked(currentUserId, (int)KinectInterop.JointType.HipRight))
+				Vector3 posHipCenter = GetJointPosition(manager, (int)KinectInterop.JointType.SpineBase);
+				
+				Vector3 posHipLeft = GetJointPosition(manager, (int)KinectInterop.JointType.HipLeft);
+				Vector3 posHipRight = GetJointPosition(manager, (int)KinectInterop.JointType.HipRight);
+				
+				Vector3 posShoulderLeft = GetJointPosition(manager, (int)KinectInterop.JointType.ShoulderLeft);
+				Vector3 posShoulderRight = GetJointPosition(manager, (int)KinectInterop.JointType.ShoulderRight);
+				
+				if(posHipCenter != Vector3.zero && posHipLeft != Vector3.zero && posHipRight != Vector3.zero &&
+				   posShoulderLeft != Vector3.zero && posShoulderRight != Vector3.zero)
 				{
-					Vector3 posHipCenter = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.SpineBase);
-
-					Vector3 posHipLeft = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.HipLeft);
-					Vector3 posHipRight = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.HipRight);
-
-					Vector3 posShoulderLeft = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.ShoulderLeft);
-					Vector3 posShoulderRight = manager.GetJointPosition(currentUserId, (int)KinectInterop.JointType.ShoulderRight);
-
 					SetupUnscaledJoint(hipCenter, leftUpperLeg, posHipCenter, (!mirroredAvatar ? posHipLeft : posHipRight), modelBodyHeight, bodyHeight);
 					SetupUnscaledJoint(hipCenter, rightUpperLeg, posHipCenter, (!mirroredAvatar ? posHipRight : posHipLeft), modelBodyHeight, bodyHeight);
 
@@ -425,6 +420,40 @@ public class AvatarScaler : MonoBehaviour
 		return false;
 	}
 
+
+	// gets the joint position in space
+	private Vector3 GetJointPosition(KinectManager manager, int joint)
+	{
+		Vector3 vPosJoint = Vector3.zero;
+
+		if(manager.IsJointTracked(currentUserId, joint))
+		{
+			if(foregroundCamera)
+			{
+				// get the background rectangle (use the portrait background, if available)
+				Rect backgroundRect = foregroundCamera.pixelRect;
+				PortraitBackground portraitBack = PortraitBackground.Instance;
+				
+				if(portraitBack && portraitBack.enabled)
+				{
+					backgroundRect = portraitBack.GetBackgroundRect();
+				}
+
+				// get the color overlay position
+				vPosJoint = manager.GetJointPosColorOverlay(currentUserId, joint, foregroundCamera, backgroundRect);
+			}
+			else
+			//if(vPosJoint == Vector3.zero)
+			{
+				vPosJoint = manager.GetJointPosition(currentUserId, joint);
+			}
+		}
+
+		return vPosJoint;
+	}
+
+
+	// sets the joint position before scaling
 	private bool SetupUnscaledJoint(Transform hipCenter, Transform joint, Vector3 posHipCenter, Vector3 posJoint, float modelBoneLen, float userBoneLen)
 	{
 		float boneScale = 0f;
@@ -438,7 +467,8 @@ public class AvatarScaler : MonoBehaviour
 		if(boneScale > 0f)
 		{
 			Vector3 posDiff = (posJoint - posHipCenter) / boneScale;
-			posDiff.z = 0f;  // ignore difference in z
+			if(foregroundCamera == null)
+				posDiff.z = 0f;  // ignore difference in z (non-overlay mode)
 
 			Vector3 posJointNew = hipCenter.position + posDiff;
 			joint.position = posJointNew;

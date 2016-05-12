@@ -38,18 +38,21 @@ Shader "Custom/Dilate" {
 
             fixed4 frag (v2f i) : SV_Target
             {
-				   float maxValue = 0.0;
-	               
-				   fixed4 texColor = tex2D (_MainTex, i.uv);
-				   for(int y=-1; y<2; y++)
-				     for(int x=-1; x<2; x++)
-					 {
-						 float val = tex2D (_MainTex, float2(i.uv.x + (float)x/_TexResX, i.uv.y +(float)y/_TexResY)).w;
-						 if(val>0.0)
-							maxValue=1.0;
-					 }
-					return fixed4(texColor.r, texColor.b, texColor.b, maxValue);
-				  
+				fixed4 texColor = tex2D(_MainTex, i.uv);
+				float maxValue = 0.0;
+
+				for(int y = -1; y < 2; y++)
+				{
+					for(int x = -1; x < 2; x++)
+				    {
+					    float val = tex2D(_MainTex, float2(i.uv.x + (float)x/_TexResX, i.uv.y + (float)y/_TexResY)).w;
+					    if(val > 0.0)
+						    maxValue = 1.0;
+				    }
+				}
+
+				//return fixed4(texColor.r, texColor.g, texColor.b, maxValue);
+				return fixed4(1.0, 1.0, 1.0, maxValue);
             }
             ENDCG
 

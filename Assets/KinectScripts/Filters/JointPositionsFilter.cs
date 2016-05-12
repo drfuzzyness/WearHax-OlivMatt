@@ -114,7 +114,11 @@ public class JointPositionsFilter
 		{
 			// If not tracked, we smooth a bit more by using a bigger jitter radius
 			// Always filter feet highly as they are so noisy
-			if (bodyData.joint[jointIndex].trackingState != KinectInterop.TrackingState.Tracked)
+			if (bodyData.joint[jointIndex].trackingState != KinectInterop.TrackingState.Tracked ||
+			    jointIndex == (int)KinectInterop.JointType.FootLeft || jointIndex == (int)KinectInterop.JointType.FootRight ||
+			    jointIndex == (int)KinectInterop.JointType.HandTipLeft || jointIndex == (int)KinectInterop.JointType.HandTipRight ||
+			    jointIndex == (int)KinectInterop.JointType.ThumbLeft || jointIndex == (int)KinectInterop.JointType.ThumbRight ||
+			    jointIndex == (int)KinectInterop.JointType.Head)
 			{
 				tempSmoothingParams.jitterRadius = this.smoothParameters.jitterRadius * 2.0f;
 				tempSmoothingParams.maxDeviationRadius = smoothParameters.maxDeviationRadius * 2.0f;
