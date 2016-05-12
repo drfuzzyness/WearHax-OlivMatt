@@ -4,9 +4,11 @@ using System.Collections;
 public class MeteorMove : MonoBehaviour {
 
     // Use this for initialization
+    public bool isMoving;
     public float timeToImpact = 180f;
 	void Start () {
-        StartCoroutine("Go");
+        isMoving = false;
+        
     }
 	
 	// Update is called once per frame
@@ -16,11 +18,12 @@ public class MeteorMove : MonoBehaviour {
 
     public void StartMeteor()
     {
-  
+        StartCoroutine("Go");
     }
 
     IEnumerator Go()
     {
+        isMoving = true;
         float i = 0f;
         Vector3 startPos = transform.position;
         while (i <= 1f)
@@ -29,7 +32,7 @@ public class MeteorMove : MonoBehaviour {
             i += Time.deltaTime / timeToImpact;
             yield return null;
         }
-        //gameover
+        GameManager.instance.Lose();
     }
 }
 

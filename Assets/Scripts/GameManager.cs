@@ -37,6 +37,9 @@ public class GameManager : MonoBehaviour {
 	public Color colorUI;
 	public Color colorUIBad;
 	public Color colorUIGood;
+	
+	[Header("Objects")]
+	public MeteorMove meteorMove;
 
 	public void OnDestroyBuilding( Transform building ) {
 		buildingsDestroyed += 1;
@@ -60,11 +63,13 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	public void Win() {
+		Debug.Log("ATTEMPING TO WIN");
 		if( stage != GameStage.LOSE && stage != GameStage.WIN ) 
 			StartCoroutine( WinRoutine() );
 	}
 	
 	public void Lose() {
+		Debug.Log("ATTEMPING TO LOSE");
 		if( stage != GameStage.LOSE && stage != GameStage.WIN ) {
 			StartCoroutine( LoseRoutine() );
 		}
@@ -129,8 +134,10 @@ public class GameManager : MonoBehaviour {
 				yield return null;
 			}
 		}
+		
 		// Teach player how to shoot the meteor
 		stage = GameStage.SHOOTING;
+		meteorMove.StartMeteor();
 		// Check if player shooting controller has ammo
 		while ( Input.GetAxis("Submit") != 1f  ) {
 			yield return null;
