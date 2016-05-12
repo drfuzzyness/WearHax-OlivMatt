@@ -15,7 +15,7 @@ public class MissileShooter : MonoBehaviour {
     public Material mat;
     public float targetVal=1f;
     public  float val;
-
+    public int ammo = 0;
     void Start () {
       mat=  targetSphere.GetComponent<MeshRenderer>().material;
 
@@ -24,8 +24,6 @@ public class MissileShooter : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        if (canShoot)
-        {
             RaycastHit hitInfo;
            if( Physics.Raycast(transform.position, Camera.main.transform.forward, out hitInfo)){
                 if (hitInfo.collider.CompareTag("Meteor"))
@@ -41,7 +39,7 @@ public class MissileShooter : MonoBehaviour {
             }
 
 
-        }
+      
 
         if (lookingAtMeteor)
         {
@@ -59,13 +57,14 @@ public class MissileShooter : MonoBehaviour {
 	}
     public void GiveAmmoFromBuilding( Transform buildingPos )
     {
-        Instantiate(missilePickup,buildingPos.position+Vector3.up*10f,Quaternion.identity);
+        Instantiate(missilePickup,buildingPos.position+Vector3.up*2f,Quaternion.identity);
     }
 
     public void ShootTheShot()
     {
-        if (lookingAtMeteor)
+        if (lookingAtMeteor&&ammo>=1)
         {
+            ammo--;
             Instantiate(playerMissile, leftHand.position, leftHand.rotation);
         }
     }

@@ -10,6 +10,8 @@ public class MeteorMissileAim : MonoBehaviour
     public float lerpSpeed = .1f;
     public float missileSpeed = 1f;
     public float accellAmt = 1f;
+    public bool canHit = true;
+
     void Start()
     {
         //startRotation = Random.rotation.eulerAngles;
@@ -19,6 +21,7 @@ public class MeteorMissileAim : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         transform.localScale =  Vector3.one * (missileSpeed-50f);
         missileSpeed += accellAmt;
         Quaternion playerTarget = Quaternion.LookRotation(meteor.position - transform.position, Vector3.up);
@@ -32,8 +35,14 @@ public class MeteorMissileAim : MonoBehaviour
     {
         if (col.CompareTag("MeteorInner"))
         {
-            col.GetComponent<MeteorDamage>().MissileHit();
-            Destroy(gameObject);
+            if (canHit)
+            {
+                Debug.Log(col.gameObject);
+                col.transform.parent.GetComponent<MeteorDamage>().MissileHit();
+                Destroy(gameObject);
+                 canHit = false;
+            }
+           
         }
     }
 }

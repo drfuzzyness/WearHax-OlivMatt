@@ -22,10 +22,9 @@ public class MeteorDamage : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (Input.anyKeyDown)
-        {
-            MissileHit();
-        }
+
+         
+     
         transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * currentScale,.1f)+extraScale*Vector3.one;
 
         if (numHitPoints <= 0)
@@ -41,12 +40,11 @@ public class MeteorDamage : MonoBehaviour {
     }
     public void MissileHit()
     {
+        Debug.Log("hit");
         numHitPoints--;
         StartCoroutine("Hit");
         currentScale -= scaleLoss;
         mat.SetFloat("_shiny", transform.localScale.x.Remap(startScale, 50f, 3f, 15f));
-
-
     }
 
     IEnumerator Hit()

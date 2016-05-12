@@ -58,7 +58,7 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 111978}
-  m_LocalRotation: {x: 0.00000005760115, y: 0.7071068, z: -0.00000005760116, w: 0.7071067}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071067}
   m_LocalPosition: {x: 0, y: -0, z: 0.053750753}
   m_LocalScale: {x: 1.5876749, y: 2.2691672, z: 2.269167}
   m_Children:
@@ -218,7 +218,8 @@ MonoBehaviour:
   meteor: {fileID: 0}
   lerpSpeed: 0.01
   missileSpeed: 1
-  accellAmt: 0.5
+  accellAmt: 0.7
+  canHit: 1
 --- !u!136 &13624446
 CapsuleCollider:
   m_ObjectHideFlags: 1

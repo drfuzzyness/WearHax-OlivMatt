@@ -40,17 +40,18 @@ public class GameManager : MonoBehaviour {
 	
 	[Header("Objects")]
 	public MeteorMove meteorMove;
+    public MissileShooter missleShooter;
 
 	public void OnDestroyBuilding( Transform building ) {
 		buildingsDestroyed += 1;
 		if( Random.Range(0f,1f) <= rocketChance ) {
-			// give missile shooter the building
+            missleShooter.GiveAmmoFromBuilding(building);
 		} else {
 			rocketPityTick++;
 			if( rocketPityTick >= rocketPityTimer ) {
 				rocketPityTick = 0;
-				// give missile shooter the building
-			}
+                missleShooter.GiveAmmoFromBuilding(building);
+            }
 		}
 	}
 
@@ -93,14 +94,15 @@ public class GameManager : MonoBehaviour {
 	void Update () {
 		
 		if( stage == GameStage.SHOOTING ) {
-			if( true /*HAVE AMMO*/ ) {
-				uiLowerText.text = "\\\\ TRIGGER TO SHOOT ROCKET[1" /*AMMO AMOUNT*/ +"] //";
+			if( missleShooter.ammo>=1) {
+				uiLowerText.text = "\\\\ TRIGGER TO SHOOT ROCKET[" +missleShooter.ammo + "] //";
 				uiLowerText.color = colorUI;
 				if( Input.GetAxis("Submit") == 1f ) {
-					// TRY TO SHOOT GUN
-				}
+                    missleShooter.ShootTheShot();
+
+                }
 			} else {
-				uiLowerText.text = "\\\\ DESTROY BUILDINGS TO GET AMMO //";
+				uiLowerText.text = "\\\\ DESTROY BUILDINGS FOR AMMO //";
 				uiLowerText.color = colorUI;
 				if( Input.GetAxis("Submit") == 1f ) {
 					uiLowerText.color = colorUIBad;
