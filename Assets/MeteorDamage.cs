@@ -37,7 +37,7 @@ public class MeteorDamage : MonoBehaviour {
 
     public void Kill()
     {
-        //setWinstate
+        GameManager.instance.Win();
     }
     public void MissileHit()
     {
