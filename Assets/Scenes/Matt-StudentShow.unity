@@ -33737,12 +33737,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22ede318f81204f44b162cf3046f2940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  countingDown: 0
-  timer: 60
-  score: 0
+  stage: 0
+  buildingsDestroyed: 0
   player: {fileID: 682410900}
   timePowerupRewardAmt: 5
   missileHitPenalty: 4
+  rocketChance: 0.5
+  rocketPityTimer: 2
+  introTutorialTextStrings:
+  - 'MISSION 0X51C: SAVE CITY H'
+  - SAVE CITY FROM INCOMING METEOR
+  - 'DANGER LEVEL: ULTRA-DRAGON'
+  - IMPACT EMINENT
+  - DESTROY BUILDINGS TO GET AMMO
+  - POINT LEFT ARM AT METEOR & SHOOT ROCKETS
+  - GOOD LOOK PILOT - SAVE THE CITY
+  shootingTutorialTextStrings: []
+  uiCenterText: {fileID: 1853273787}
+  uiLowerText: {fileID: 1032017701}
+  colorUI: {r: 0.96862745, g: 0.48235294, b: 0, a: 1}
+  colorUIBad: {r: 0.50174904, g: 0.96862745, b: 0, a: 1}
+  colorUIGood: {r: 0.96862745, g: 0.09298824, b: 0, a: 1}
 --- !u!4 &1687451169
 Transform:
   m_ObjectHideFlags: 0
@@ -38786,7 +38801,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -0.00015258789}
-  m_SizeDelta: {x: -1230, y: -1190}
+  m_SizeDelta: {x: -999, y: -1190}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1853273786
 MonoBehaviour:

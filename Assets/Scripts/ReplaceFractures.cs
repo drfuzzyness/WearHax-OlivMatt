@@ -20,7 +20,7 @@ public class ReplaceFractures : MonoBehaviour {
 			return;
 		}
 
-		GameManager.instance.OnDestroyBuilding();
+		GameManager.instance.OnDestroyBuilding( transform );
 		if( givePowerup ) {
 			GameManager.instance.OnGetPowerup();
 		}

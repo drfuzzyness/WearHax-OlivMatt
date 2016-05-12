@@ -20,16 +20,16 @@ public class GameUIController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		scoreNumTO.text = gm.score.ToString();
-		timerNumTO.text = Mathf.Floor( gm.timer ).ToString();
-		Color newMissileColor = missileTO.color;
-		if( mc.midairMissiles.Count > 0 ) {
-			Vector3 distance = gm.player.transform.position - mc.midairMissiles[0].transform.position;
-			newMissileColor.a = ( 1 / distance.magnitude ) * missileOpacitySensitivity;
-		} else {
-			newMissileColor.a = 0;
-		}
-		missileTO.color = newMissileColor;
-		// update missile overlay
+		// scoreNumTO.text = gm.buildingsDestroyed.ToString();
+		// timerNumTO.text = Mathf.Floor( gm.timer ).ToString();
+		// Color newMissileColor = missileTO.color;
+		// if( mc.midairMissiles.Count > 0 ) {
+		// 	Vector3 distance = gm.player.transform.position - mc.midairMissiles[0].transform.position;
+		// 	newMissileColor.a = ( 1 / distance.magnitude ) * missileOpacitySensitivity;
+		// } else {
+		// 	newMissileColor.a = 0;
+		// }
+		// missileTO.color = newMissileColor;
+		// // update missile overlay
 	}
 }
