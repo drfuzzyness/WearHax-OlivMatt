@@ -60,8 +60,14 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	public void Win() {
-		if( stage != GameStage.WIN ) 
+		if( stage != GameStage.LOSE && stage != GameStage.WIN ) 
 			StartCoroutine( WinRoutine() );
+	}
+	
+	public void Lose() {
+		if( stage != GameStage.LOSE && stage != GameStage.WIN ) {
+			StartCoroutine( LoseRoutine() );
+		}
 	}
 
 	void Awake() {
@@ -98,6 +104,10 @@ public class GameManager : MonoBehaviour {
 		} else if( stage != GameStage.TUTORIAL ) {
 			uiLowerText.text = "";
 		}
+		
+		if( Input.GetKeyDown( KeyCode.Escape )) {
+			SceneManager.LoadScene(0);
+		}
 	}
 
 	private void GameOver() {
@@ -108,12 +118,12 @@ public class GameManager : MonoBehaviour {
 		
 		stage = GameStage.TUTORIAL;
 		// uiLowerText.text = "\\\\ PRESS TRIGGER TO CONTINUE //";
-		lowerTextRoutine = SetTextRoutine( uiLowerText, "PRESS TRIGGER TO CONTINUE", true, .1f );
+		lowerTextRoutine = SetTextRoutine( uiLowerText, "PRESS TRIGGER TO CONTINUE", true, .03f );
 		StartCoroutine( lowerTextRoutine );
 		// Basic tutorial, teach how to move and goal
 		foreach (string thisTextStr in introTutorialTextStrings) {
 			yield return new WaitForSeconds(.2f);
-			centerTextRoutine = SetTextRoutine( uiCenterText, thisTextStr, false, .1f );
+			centerTextRoutine = SetTextRoutine( uiCenterText, thisTextStr, false, .05f );
 			StartCoroutine( centerTextRoutine );
 			while ( Input.GetAxis("Submit") != 1f ) {
 				yield return null;
@@ -136,6 +146,7 @@ public class GameManager : MonoBehaviour {
 		stage = GameStage.WIN;
 		uiLowerText.text = "\\\\ PRESS TRIGGER TO CONTINUE //";
 		centerTextRoutine = SetTextRoutine( uiCenterText, "CITY SAVED", false, .5f );
+		yield return new WaitForSeconds( 6f );
 		while ( Input.GetAxis("Submit") != 1f ) {
 			yield return null;
 		}
@@ -143,9 +154,10 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	IEnumerator LoseRoutine() {
-		stage = GameStage.WIN;
+		stage = GameStage.LOSE;
 		uiLowerText.text = "\\\\ PRESS TRIGGER TO CONTINUE //";
 		centerTextRoutine = SetTextRoutine( uiCenterText, "CITY DESTROYED", false, .5f );
+		yield return new WaitForSeconds( 6f );
 		while ( Input.GetAxis("Submit") != 1f ) {
 			yield return null;
 		}
